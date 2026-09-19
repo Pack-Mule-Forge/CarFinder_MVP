@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">CarFinder_MVP</string>
+    <!-- Guidance view state messages (FR-019, FR-020, FR-021) - exact wording per spec -->
+    <string name="state_driving">Driving - Waiting to Park</string>
+    <string name="state_no_location">No parked Location yet.</string>
+    <string name="state_parking_soon">Sensing you will be Parking Soon.</string>
+    <string name="state_arrived">You have arrived</string>
+    <string name="state_arrived_question">Do you see your car?</string>
+</resources>

@@ -222,7 +222,11 @@ when there is no location to delete.
   `PARKING_SPEED_THRESHOLD` and at or below `DRIVING_SPEED_THRESHOLD`.
 - **FR-005**: While in PARKING, System MUST sample location once per `PARKING_SAMPLE_INTERVAL`.
 - **FR-006**: System MUST transition from PARKING to PARKED when `CONVERGENCE_SAMPLE_COUNT`
-  consecutive location samples all lie within `CONVERGENCE_RADIUS` of one another.
+  consecutive location samples all lie within `CONVERGENCE_RADIUS` of one another. Convergence is
+  determined by the **all-pairwise** criterion: each sample's distance to every other sample in the
+  window MUST be at most `CONVERGENCE_RADIUS` meters. (This is the stricter interpretation: three
+  samples in a line 9 m apart each would fail at pairwise distances of 18 m, even though each is
+  individually within the radius of some others.)
 - **FR-007**: When entering PARKED, System MUST store the centroid of the converging samples as the
   Parked Location.
 - **FR-008**: While in PARKING with a non-converging sample window, System MUST advance the window by
@@ -236,6 +240,10 @@ when there is no location to delete.
 - **FR-010**: System MUST delete the current Parked Location and enter DRIVING when observed speed
   exceeds `DRIVING_SPEED_THRESHOLD` while in PARKED or in FINDING. In FINDING no Parked Location is
   held, so the deletion is a no-op and MUST NOT be treated as an error.
+- **FR-010a**: The parking state machine MUST be initialized and running at all times after the
+  user grants the required location permission. The system MUST NOT wait for the app to be opened
+  or brought to the foreground. This ensures parking detection operates continuously in the
+  background regardless of app visibility.
 
 #### Parked Location Persistence and Lifecycle
 
@@ -281,8 +289,12 @@ when there is no location to delete.
 
 - **FR-023**: System MUST render a cone whose half-angle equals
   `atan(uncertainty_radius / distance_to_parked_location)`.
-- **FR-024**: System MUST center the cone on `display_bearing = (360 − device_heading +
-  bearing_to_car) mod 360`, so the cone tracks the vehicle as the device turns.
+- **FR-024**: System MUST center the cone on `display_bearing = (360 − device_heading_true_north +
+  bearing_to_car) mod 360`, where `device_heading_true_north` is the true-north corrected heading
+  derived from the compass reading by applying the geomagnetic field declination at the user's
+  current location via `GeomagneticField.getDeclination()` or equivalent. The bearing to the car is
+  already computed in true-north by the geodesy module. The cone MUST track the vehicle as the
+  device turns.
 - **FR-025**: System MUST anchor a person icon at the user's current position, at the base of the
   cone, and a car icon at the opposite end of the cone.
 - **FR-026**: System MUST NOT draw the cone's centerline.
@@ -374,7 +386,12 @@ when there is no location to delete.
   stuttering or dropped frames visible to the user during movement.
 - **SC-005**: The width of the displayed cone is proportional to the system's actual positional
   uncertainty, such that the vehicle's true location falls inside the displayed cone in at least 95%
-  of trials.
+  of trials. **Validation methodology**: In field testing, the user opens the app after parking at a
+  known landmark (e.g., a building entrance with sub-meter GPS survey coordinates). The cone's
+  position and width are recorded for 50+ trials across different locations and times of day. Ground
+  truth is the landmark's surveyed coordinates. A trial passes if the true location falls within the
+  rendered cone half-angle and distance formula. The 95% threshold represents the expected
+  cumulative accuracy of both the device's GPS and the app's uncertainty model.
 - **SC-006**: A stale parking location is presented to the user in 0 out of 100 drive-away-and-return
   trials.
 - **SC-007**: Arrival is announced in 100% of approaches where the user reaches a distance at which
@@ -417,12 +434,15 @@ decisions made here:
   and to DRIVING when observed speed exceeds `DRIVING_SPEED_THRESHOLD`. The source description did
   not state FINDING's exit conditions; these are the minimum needed for the state machine to be
   closed.
-- **Known wording mismatch**: under FR-030, a signal loss while a Parked Location is stored puts the
-  system in FINDING, which displays "No parked Location yet." — a message that is inaccurate in that
-  situation, since a location does exist and is not lost. This follows directly from the decision to
-  make FINDING the catch-all default state. A distinct message for the signal-loss case (for
-  example, "Location signal unavailable") would resolve it without changing the state model, and is
-  a candidate for `/speckit-clarify` if the wording matters.
+- **Signal loss and the FINDING fallback**: When position signal is lost or degraded while a Parked
+  Location exists, the system transitions to FINDING (per FR-030) and displays "No parked Location
+  yet." This message is technically inaccurate in that case — the location exists but guidance cannot
+  be rendered because position updates are unavailable. This trade-off is intentional: using FINDING
+  as the unified default state simplifies the state machine and ensures the system never enters an
+  undefined state. The suppressed guidance during signal loss is the correct safety behavior (do not
+  show stale guidance if you cannot refresh the cone). If user-facing distinction between
+  "never parked" and "signal lost" becomes important, add a parallel status-message variant for
+  signal-loss conditions without changing the state model.
 - Speed is derived from the device's own location provider, not from any vehicle integration.
 - A single current parked location is tracked at a time. Multi-vehicle support is not in scope.
 - The bearing and distance math required for guidance reuses an existing prior implementation rather
