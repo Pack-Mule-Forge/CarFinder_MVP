@@ -45,8 +45,8 @@ class GuidanceViewModel(
                     parkingState = persistedData.state,
                     parkedLocation = persistedData.parkedLocation,
                     currentFix = currentFix.point,
-                    deviceHeading = deviceHeading,
-                    currentHeading = currentFix.speedMetersPerSecond  // Repurpose for angle updates
+                    currentFixAgeMillis = null,
+                    deviceHeading = deviceHeading
                 )
             }.collect { viewState ->
                 _viewState.value = viewState

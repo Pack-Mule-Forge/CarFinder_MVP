@@ -86,4 +86,29 @@ class ParkedLocationRepositoryContractTest {
         assertEquals(ParkingState.PARKED, data.state)
         assertEquals(location.point.latitudeDegrees, data.parkedLocation?.point?.latitudeDegrees)
     }
+
+    @Test
+    fun secondSaveReplacesFirstAndNoReadPathSurfacesTwoLocations() = runTest {
+        // FR-012: only one ParkedLocation may ever be stored; a second save() replaces the first
+        val repo = FakeParkedLocationRepository()
+        val first = ParkedLocation(
+            point = GeoPoint(37.7749, -122.4194, 15.0),
+            capturedAtEpochMillis = 1000L
+        )
+        val second = ParkedLocation(
+            point = GeoPoint(40.7128, -74.0060, 10.0),
+            capturedAtEpochMillis = 2000L
+        )
+
+        repo.save(ParkingState.PARKED, first)
+        repo.save(ParkingState.PARKED, second)
+
+        val loaded = repo.load()
+        assertEquals(second.point.latitudeDegrees, loaded.parkedLocation?.point?.latitudeDegrees)
+        assertEquals(second.capturedAtEpochMillis, loaded.parkedLocation?.capturedAtEpochMillis)
+
+        val observed = repo.observe().first()
+        assertEquals(second.point.latitudeDegrees, observed.parkedLocation?.point?.latitudeDegrees)
+        assertEquals(second.capturedAtEpochMillis, observed.parkedLocation?.capturedAtEpochMillis)
+    }
 }

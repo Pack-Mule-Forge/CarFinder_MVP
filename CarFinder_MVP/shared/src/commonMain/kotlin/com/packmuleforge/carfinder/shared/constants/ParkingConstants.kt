@@ -31,6 +31,10 @@ object ParkingConstants {
     const val DISTANCE_UNIT_THRESHOLD_FEET = 500.0
     val DISTANCE_UNIT_THRESHOLD_METERS = 500.0 * 0.3048  // 152.4 m
 
+    // ========== Fix Staleness (FR-034, FR-043) ==========
+
+    const val FIX_STALENESS_TIMEOUT_MILLIS = 30_000L
+
     init {
         // FR-004: Dead zone is only well-defined if thresholds are ordered
         require(PARKING_SPEED_THRESHOLD_MPS < DRIVING_SPEED_THRESHOLD_MPS) {

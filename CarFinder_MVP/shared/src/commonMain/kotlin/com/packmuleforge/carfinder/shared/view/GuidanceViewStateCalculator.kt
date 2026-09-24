@@ -1,6 +1,7 @@
 package com.packmuleforge.carfinder.shared.view
 
 import com.packmuleforge.carfinder.shared.annotation.Requirement
+import com.packmuleforge.carfinder.shared.constants.ParkingConstants
 import com.packmuleforge.carfinder.shared.geo.AngleUtils
 import com.packmuleforge.carfinder.shared.geo.ConeGeometry
 import com.packmuleforge.carfinder.shared.geo.DistanceFormatter
@@ -17,14 +18,14 @@ import com.packmuleforge.carfinder.shared.model.ParkingState
  *
  * All computation lives here; Composables are pure functions of this output.
  */
-@Requirement("FR-018", "FR-019", "FR-020", "FR-021", "FR-022", "FR-030", "FR-042")
+@Requirement("FR-018", "FR-019", "FR-020", "FR-021", "FR-022", "FR-030", "FR-042", "FR-043")
 object GuidanceViewStateCalculator {
     fun calculate(
         parkingState: ParkingState,
         parkedLocation: ParkedLocation?,
         currentFix: GeoPoint?,
-        deviceHeading: Double?,
-        currentHeading: Double?
+        currentFixAgeMillis: Long?,
+        deviceHeading: Double?
     ): GuidanceViewState {
         // FR-018: Strict priority order
         // 1. DRIVING → always "Driving - Waiting to Park"
@@ -32,7 +33,7 @@ object GuidanceViewStateCalculator {
             return GuidanceViewState.Driving
         }
 
-        // 2. FINDING → "No parked Location yet."
+        // 2. FINDING → no location has ever been stored, so there is nothing to guide to
         if (parkingState == ParkingState.FINDING) {
             return GuidanceViewState.NoParkedLocation
         }
@@ -42,8 +43,12 @@ object GuidanceViewStateCalculator {
             return GuidanceViewState.ParkingSoon
         }
 
-        // 4. PARKED with a location and the required inputs → Guidance; otherwise fall back
-        if (parkingState == ParkingState.PARKED && parkedLocation != null && currentFix != null && deviceHeading != null && currentHeading != null) {
+        // FR-043: a fix exactly at the staleness timeout still counts as current; only an age
+        // strictly greater than the timeout is stale. A null age is not itself a staleness signal.
+        val isFixStale = currentFixAgeMillis != null && currentFixAgeMillis > ParkingConstants.FIX_STALENESS_TIMEOUT_MILLIS
+
+        // 4. PARKED with a location and current, complete inputs → Guidance; otherwise fall back
+        if (parkingState == ParkingState.PARKED && parkedLocation != null && currentFix != null && !isFixStale && deviceHeading != null) {
             val distance = Geodesy.distanceMeters(parkedLocation.point, currentFix)
             val bearing = Geodesy.trueBearingDegrees(currentFix, parkedLocation.point)
             val uncertainty = UncertaintyCalculator.calculate(parkedLocation.point, currentFix)
@@ -60,7 +65,7 @@ object GuidanceViewStateCalculator {
             )
         }
 
-        // FR-030: Undefined state → fallback to FINDING
+        // FR-030/FR-043: PARKED but missing, stale, or incomplete inputs → fall back to NoParkedLocation
         return GuidanceViewState.NoParkedLocation
     }
 }

@@ -21,14 +21,13 @@ class GuidanceViewStateCalculatorGuidanceTest {
         )
         val currentFix = GeoPoint(37.7750, -122.4195, 10.0)
         val deviceHeading = 0.0
-        val currentHeading = 90.0
 
         val viewState = GuidanceViewStateCalculator.calculate(
             parkingState = ParkingState.PARKED,
             parkedLocation = location,
             currentFix = currentFix,
             deviceHeading = deviceHeading,
-            currentHeading = currentHeading
+            currentFixAgeMillis = 0L
         )
 
         assertIs<GuidanceViewState.Guidance>(viewState, "PARKED with location should produce Guidance")
@@ -42,14 +41,13 @@ class GuidanceViewStateCalculatorGuidanceTest {
         )
         val currentFix = GeoPoint(37.7750, -122.4195, 10.0)
         val deviceHeading = 45.0
-        val currentHeading = 90.0
 
         val viewState = GuidanceViewStateCalculator.calculate(
             parkingState = ParkingState.PARKED,
             parkedLocation = location,
             currentFix = currentFix,
             deviceHeading = deviceHeading,
-            currentHeading = currentHeading
+            currentFixAgeMillis = 0L
         ) as GuidanceViewState.Guidance
 
         assertTrue(viewState.distanceMeters > 0.0, "Distance should be positive")
@@ -67,14 +65,13 @@ class GuidanceViewStateCalculatorGuidanceTest {
         )
         val currentFix = GeoPoint(37.7750, -122.4195, 10.0)  // 15 meters away
         val deviceHeading = 0.0
-        val currentHeading = 90.0
 
         val viewState = GuidanceViewStateCalculator.calculate(
             parkingState = ParkingState.PARKED,
             parkedLocation = location,
             currentFix = currentFix,
             deviceHeading = deviceHeading,
-            currentHeading = currentHeading
+            currentFixAgeMillis = 0L
         ) as GuidanceViewState.Guidance
 
         // Cone half-angle should be atan(uncertainty / distance)
@@ -90,14 +87,13 @@ class GuidanceViewStateCalculatorGuidanceTest {
         )
         val currentFix = GeoPoint(37.7749, -122.4194, 10.0)
         val deviceHeading = 0.0
-        val currentHeading = 90.0
 
         val viewState = GuidanceViewStateCalculator.calculate(
             parkingState = ParkingState.PARKED,
             parkedLocation = shortDistance,
             currentFix = currentFix,
             deviceHeading = deviceHeading,
-            currentHeading = currentHeading
+            currentFixAgeMillis = 0L
         ) as GuidanceViewState.Guidance
 
         // Should use feet for short distance

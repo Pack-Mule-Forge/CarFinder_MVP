@@ -20,7 +20,7 @@ class GuidanceViewStateSelectionTest {
             parkedLocation = null,
             currentFix = GeoPoint(40.0, -74.0, 5.0),
             deviceHeading = 0.0,
-            currentHeading = 0.0
+            currentFixAgeMillis = null
         )
         assertIs<GuidanceViewState.Driving>(result)
     }
@@ -33,7 +33,7 @@ class GuidanceViewStateSelectionTest {
             parkedLocation = null,
             currentFix = GeoPoint(40.0, -74.0, 5.0),
             deviceHeading = 0.0,
-            currentHeading = 0.0
+            currentFixAgeMillis = null
         )
         assertIs<GuidanceViewState.NoParkedLocation>(result)
     }
@@ -46,7 +46,7 @@ class GuidanceViewStateSelectionTest {
             parkedLocation = null,
             currentFix = GeoPoint(40.0, -74.0, 5.0),
             deviceHeading = 0.0,
-            currentHeading = 0.0
+            currentFixAgeMillis = null
         )
         assertIs<GuidanceViewState.ParkingSoon>(result)
     }
@@ -63,7 +63,7 @@ class GuidanceViewStateSelectionTest {
             parkedLocation = parkedLoc,
             currentFix = GeoPoint(40.01, -74.01, 5.0),
             deviceHeading = 45.0,
-            currentHeading = 45.0
+            currentFixAgeMillis = null
         )
         assertIs<GuidanceViewState.Guidance>(result)
     }
@@ -81,7 +81,7 @@ class GuidanceViewStateSelectionTest {
             parkedLocation = parkedLoc,
             currentFix = GeoPoint(40.01, -74.01, 5.0),
             deviceHeading = 45.0,
-            currentHeading = 45.0
+            currentFixAgeMillis = null
         )
         assertIs<GuidanceViewState.Driving>(result)
     }
@@ -98,7 +98,7 @@ class GuidanceViewStateSelectionTest {
             parkedLocation = parkedLoc,
             currentFix = null,
             deviceHeading = 45.0,
-            currentHeading = 45.0
+            currentFixAgeMillis = null
         )
         assertIs<GuidanceViewState.NoParkedLocation>(result)
     }
@@ -115,7 +115,7 @@ class GuidanceViewStateSelectionTest {
             parkedLocation = parkedLoc,
             currentFix = GeoPoint(40.01, -74.01, 5.0),
             deviceHeading = null,
-            currentHeading = 45.0
+            currentFixAgeMillis = null
         )
         assertIs<GuidanceViewState.NoParkedLocation>(result)
     }
@@ -133,7 +133,7 @@ class GuidanceViewStateSelectionTest {
             parkedLocation = parkedLoc,
             currentFix = GeoPoint(40.01, -74.01, 5.0),
             deviceHeading = 45.0,
-            currentHeading = 45.0
+            currentFixAgeMillis = null
         )
         assertIs<GuidanceViewState.NoParkedLocation>(result)
     }

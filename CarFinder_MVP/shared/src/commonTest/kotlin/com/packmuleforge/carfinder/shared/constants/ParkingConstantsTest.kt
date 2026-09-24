@@ -55,6 +55,15 @@ class ParkingConstantsTest {
     }
 
     @Test
+    fun fixStalenessTimeoutIsPositive() {
+        // FR-034/FR-043: A non-positive timeout would make every fix immediately stale
+        assertTrue(
+            ParkingConstants.FIX_STALENESS_TIMEOUT_MILLIS > 0L,
+            "Fix staleness timeout must be positive"
+        )
+    }
+
+    @Test
     fun allConstantsReferenceSourceValues() {
         // This is a code review property: no test can verify that SI constants are derived from
         // source constants rather than hardcoded. The architecture ensures it through single-
