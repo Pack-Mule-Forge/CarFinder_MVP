@@ -163,11 +163,12 @@ sealed interface GuidanceViewState {
 }
 
 object GuidanceViewStateCalculator {
-    @Requirement("FR-018", "FR-019", "FR-020", "FR-021", "FR-022", "FR-030")
+    @Requirement("FR-018", "FR-019", "FR-020", "FR-021", "FR-022", "FR-030", "FR-043")
     fun calculate(
         state: ParkingState,
         parkedLocation: ParkedLocation?,
         currentFix: GeoPoint?,
+        currentFixAgeMillis: Long?,   // caller computes now - fix time from a Clock (FR-043)
         deviceHeadingDegrees: Double?,
     ): GuidanceViewState
 }
@@ -175,8 +176,9 @@ object GuidanceViewStateCalculator {
 
 **Contract**: `calculate` is a pure function — same inputs, same output, no I/O, no clock. This is
 what FR-042 requires and what makes the four-way selection exhaustively testable. It is total: every
-input combination, including all-nulls, yields a variant. Null `currentFix` or null heading resolves
-to `NoParkedLocation` per FR-030.
+input combination, including all-nulls, yields a variant. Null `currentFix`, a `currentFixAgeMillis` above
+`FIX_STALENESS_TIMEOUT`, or a null heading resolves to `NoParkedLocation` per FR-030 and FR-043. The
+caller supplies the age; the calculator itself reads no clock.
 
 ---
 

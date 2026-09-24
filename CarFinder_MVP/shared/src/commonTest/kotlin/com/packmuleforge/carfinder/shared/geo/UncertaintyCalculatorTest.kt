@@ -5,6 +5,7 @@ import com.packmuleforge.carfinder.shared.model.GeoPoint
 import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 @Requirement("FR-015", "FR-016", "FR-037")
 class UncertaintyCalculatorTest {

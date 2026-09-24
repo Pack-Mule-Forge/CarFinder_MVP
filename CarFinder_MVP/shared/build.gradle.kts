@@ -32,6 +32,8 @@ kotlin {
         // commonTest = tests for that shared code.
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            // ADDED: runTest { } used by the shared-logic tests.
+            implementation(libs.kotlinx.coroutines.test)
         }
         // androidMain = Android-only code (the adapters).
         androidMain.dependencies {

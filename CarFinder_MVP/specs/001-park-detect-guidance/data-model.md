@@ -10,7 +10,7 @@ internally; conversion happens only at the presentation boundary and at constant
 ## Unit policy
 
 **Decision**: every internal value is SI — meters, meters/second, radians for computation, degrees
-for bearings at API boundaries. The seven named constants are declared in the units the spec states
+for bearings at API boundaries. The eight named constants are declared in the units the spec states
 them in (mph, feet, degrees) and converted once, at the declaration site.
 
 **Why it matters**: FR-034 forbids duplicating literal constant values, and FR-037 requires tests to
@@ -33,9 +33,11 @@ The single source of truth. No other file may contain these literals; no test ma
 | `PARKING_SAMPLE_INTERVAL` | 5 s | 5000 ms | FR-005 |
 | `ARRIVAL_CONE_HALF_ANGLE` | 45° | π/4 rad | FR-031 |
 | `DISTANCE_UNIT_THRESHOLD` | 500 ft | 152.4 m | FR-029 |
+| `FIX_STALENESS_TIMEOUT` | 30 s | 30000 ms | FR-030, FR-043 |
 
 **Validation**: thresholds must satisfy `PARKING_SPEED_THRESHOLD < DRIVING_SPEED_THRESHOLD` — the
 dead zone of FR-004 is only well-defined if they are ordered. Assert this in a test.
+`FIX_STALENESS_TIMEOUT` must be positive; assert that too.
 
 ---
 
@@ -94,10 +96,11 @@ radii — this is the value FR-015 later sums with the live fix's accuracy.
 DRIVING | PARKING | PARKED | FINDING
 ```
 
-**FINDING is the default and initial state** (FR-009, FR-030) — the state in which no `ParkedLocation`
-has been determined, whether because the app was just installed or because no usable position signal
-is available. A newly installed system starts in FINDING. PARKED is the state in which a location is
-held, and it covers walking back to the vehicle.
+**FINDING is the default and initial state** (FR-009) — the state in which no `ParkedLocation` is
+held, which in this version means the app was just installed and no parking cycle has completed. A
+newly installed system starts in FINDING. PARKED is the state in which a location is held, and it
+covers walking back to the vehicle. Loss of position signal or compass **never changes the state**;
+it changes only what is displayed (FR-030, `GuidanceViewState`).
 
 ### Invariants
 
@@ -107,6 +110,7 @@ held, and it covers walking back to the vehicle.
 | FINDING never holds a `ParkedLocation` | FR-009 |
 | Exactly one state is current at any time | FR-001 |
 | State and location persist and restore together | FR-011 |
+| Loss of live position or heading never changes `ParkingState` or the stored `ParkedLocation` | FR-009, FR-030 |
 
 ### Transitions
 
@@ -119,9 +123,9 @@ held, and it covers walking back to the vehicle.
 | PARKING | samples do not converge | PARKING *(slide window, forever)* | FR-008 |
 | PARKED | speed > `DRIVING_SPEED_THRESHOLD` | DRIVING *(deletes location)* | FR-010 |
 | FINDING | speed > `DRIVING_SPEED_THRESHOLD` | DRIVING *(no-op delete)* | FR-010 |
-| PARKED | position signal lost / indeterminate | FINDING | FR-009, FR-030 |
-| FINDING | usable fix returns **and** a stored location exists | PARKED | Assumption (spec) |
-| *undefined* | — | FINDING *(fallback)* | FR-030 |
+
+There is deliberately no transition for signal loss or a missing compass: those conditions are
+handled in the view (FR-030), not in the state machine.
 
 **Boundary semantics to encode as tests** — these are the spec's edge cases, and each is an
 off-by-one waiting to happen:
@@ -177,9 +181,9 @@ a defensive branch.
 | Variant | Shown when | Requirement |
 |---------|-----------|-------------|
 | `Driving` | state is DRIVING | FR-019 |
-| `NoParkedLocation` | state is FINDING and not DRIVING; also the undefined-state fallback | FR-020, FR-030 |
+| `NoParkedLocation` | state is FINDING, **or** state is PARKED but guidance is unavailable (no current fix, no heading) — the display fallback | FR-020, FR-030 |
 | `ParkingSoon` | state is PARKING | FR-021 |
-| `Guidance` | state is PARKED and a location exists | FR-022 |
+| `Guidance` | state is PARKED, a location exists, and a current fix and heading are available | FR-022, FR-030 |
 
 ### `Guidance` payload
 
@@ -193,7 +197,9 @@ a defensive branch.
 
 **Selection order is strict** (FR-018): Driving → NoParkedLocation → ParkingSoon → Guidance. The
 DRIVING check outranks the no-location check, so a brand-new install mid-drive shows the driving
-message (FR-019, spec US4 scenario 1).
+message (FR-019, spec US4 scenario 1). When the state is PARKED but a current fix or a heading is
+missing, the result is `NoParkedLocation`; the calculator receives the fix *age* as an input so that
+it stays pure, with no clock (FR-042, FR-043).
 
 **Division-by-zero guard**: `coneHalfAngleRadians` divides by `distanceMeters`. At zero distance the
 result is undefined; the spec's edge case requires this be treated as arrival, so the calculator

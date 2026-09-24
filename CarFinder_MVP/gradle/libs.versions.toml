@@ -18,6 +18,10 @@ junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
+# ADDED: provides viewModel() for Compose (androidx.lifecycle.viewmodel.compose.viewModel), used by MainActivity.
+# Same version as lifecycle-runtime-ktx so the lifecycle libraries stay in step.
+# Reference: https://developer.android.com/jetpack/androidx/releases/lifecycle
+androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycleRuntimeKtx" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
 androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }
@@ -28,6 +32,13 @@ androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-
 androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
+# ADDED: provides runTest { } for testing coroutine code. Same version as kotlinx-coroutines-core
+# so the two never drift apart. Reference: https://github.com/Kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-test
+# ADDED: the JUnit4 flavour of kotlin-test. The plain kotlin-test artifact is "multiplatform" and did not
+# put kotlin.test.Test on the Android unit-test classpath; this variant maps it onto JUnit4.
+# Reference: https://kotlinlang.org/api/latest/kotlin.test/
+kotlin-test-junit = { group = "org.jetbrains.kotlin", name = "kotlin-test-junit", version.ref = "kotlin" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
 kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "kotlin" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 androidx-datastore-proto = { group = "androidx.datastore", name = "datastore", version.ref = "datastoreVersion" }

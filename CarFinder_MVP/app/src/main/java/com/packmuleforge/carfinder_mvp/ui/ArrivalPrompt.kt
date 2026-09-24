@@ -11,6 +11,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.packmuleforge.carfinder.shared.annotation.Requirement
@@ -36,16 +38,14 @@ fun ArrivalPrompt(
             Text(
                 text = "You have arrived",
                 fontSize = 28.sp,
-                modifier = Modifier.padding(bottom = 24.dp),
-                semantics { testTag = "arrival_message" }
+                modifier = Modifier.padding(bottom = 24.dp).semantics { testTag = "arrival_message" }
             )
 
             // "Do you see your car?" question
             Text(
                 text = "Do you see your car?",
                 fontSize = 18.sp,
-                modifier = Modifier.padding(bottom = 32.dp),
-                semantics { testTag = "arrival_prompt" }
+                modifier = Modifier.padding(bottom = 32.dp).semantics { testTag = "arrival_prompt" }
             )
 
             // Yes/No buttons
@@ -55,16 +55,14 @@ fun ArrivalPrompt(
             ) {
                 Button(
                     onClick = { onAnswered(true) },
-                    modifier = Modifier.weight(1f),
-                    semantics { testTag = "arrival_answer_yes" }
+                    modifier = Modifier.weight(1f).semantics { testTag = "arrival_answer_yes" }
                 ) {
                     Text("Yes")
                 }
 
                 Button(
                     onClick = { onAnswered(false) },
-                    modifier = Modifier.weight(1f),
-                    semantics { testTag = "arrival_answer_no" }
+                    modifier = Modifier.weight(1f).semantics { testTag = "arrival_answer_no" }
                 ) {
                     Text("No")
                 }

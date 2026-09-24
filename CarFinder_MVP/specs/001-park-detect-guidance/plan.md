@@ -118,7 +118,7 @@ shared/                                 # NEW — Kotlin Multiplatform domain co
 └── src/
     ├── commonMain/kotlin/com/packmuleforge/carfinder/shared/
     │   ├── annotation/Requirement.kt              # FR-038, FR-039
-    │   ├── constants/ParkingConstants.kt          # FR-034 — single source of all seven
+    │   ├── constants/ParkingConstants.kt          # FR-034 — single source of all eight
     │   ├── model/
     │   │   ├── ParkingState.kt                    # FR-001, FR-009
     │   │   ├── ParkedLocation.kt                  # FR-007, FR-012
@@ -136,13 +136,13 @@ shared/                                 # NEW — Kotlin Multiplatform domain co
     │   ├── view/GuidanceViewStateCalculator.kt    # FR-018..FR-022, FR-030, FR-042
     │   ├── repository/ParkedLocationRepository.kt # interface only — FR-011, FR-013
     │   └── platform/
-    │       ├── LocationProvider.kt                # expect
-    │       ├── HeadingProvider.kt                 # expect
-    │       ├── PermissionController.kt            # expect — Principle V
-    │       └── PlatformCapabilities.kt            # expect
+    │       ├── LocationProvider.kt                # interface (CR-8)
+    │       ├── HeadingProvider.kt                 # interface (CR-8)
+    │       ├── PermissionController.kt            # interface — Principle III/V (CR-8)
+    │       └── PlatformCapabilities.kt            # (not built; see ledger R1-G5)
     ├── commonTest/kotlin/…                        # FR-035, FR-037 + Fake adapters (FR-III)
     └── androidMain/kotlin/com/packmuleforge/carfinder/shared/platform/
-        └── *.android.kt                           # actual declarations
+        └── *.android.kt                           # Android* implementation classes of the interfaces
 
 app/                                    # EXISTING — Android UI + adapters
 └── src/

@@ -96,7 +96,7 @@ The scenario that proves the premise. Use mock locations so it is repeatable.
    3 × 5 s = 15 s so the convergence window can fill.
 4. Open the app.
 
-**Expected**: the guidance display, not "No parked Location yet." The park was captured with the app
+**Expected**: the guidance display, not "Parked location unavailable." The park was captured with the app
 closed — SC-011. If it shows the status message instead, the state machine is not running in the
 background and FR-014 is not met.
 
@@ -123,7 +123,7 @@ all three separately — they exercise different teardown paths, and reboot addi
 With a parked location stored, feed a mock track rising above 25 mph.
 
 **Expected**: the location is deleted and the state becomes DRIVING. Reopening the app mid-drive
-shows `Driving - Waiting to Park`; after slowing, `No parked Location yet.` — **never** the previous
+shows `Driving - Waiting to Park`; after slowing, `Sensing you will be Parking Soon.` — **never** the previous
 location. A stale location here is the worst failure mode in the feature.
 
 ---

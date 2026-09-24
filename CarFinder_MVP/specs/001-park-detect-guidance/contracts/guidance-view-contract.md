@@ -51,15 +51,16 @@ them, so they belong in one string resource file and nowhere else.
 | Constant | Text | Requirement |
 |----------|------|-------------|
 | `MSG_DRIVING` | `Driving - Waiting to Park` | FR-019 |
-| `MSG_NO_LOCATION` | `No parked Location yet.` | FR-020 |
+| `MSG_NO_LOCATION` | `Parked location unavailable.` | FR-020 |
 | `MSG_PARKING_SOON` | `Sensing you will be Parking Soon.` | FR-021 |
 | `MSG_ARRIVED` | `You have arrived` | FR-031 |
 | `MSG_ARRIVAL_PROMPT` | `Do you see your car?` | FR-032 |
 
 > Note the inconsistent casing and terminal punctuation across these five — `Driving - Waiting to
-> Park` has no period, `No parked Location yet.` does and capitalizes "Location" mid-sentence. This
-> is carried through from the source description deliberately (spec Assumptions). If it is
-> unintentional, fixing it is a spec change, not a UI change.
+> Park` has no period while `Sensing you will be Parking Soon.` does. That is carried through from the
+> source description deliberately (spec Assumptions). `MSG_NO_LOCATION` was reworded from the source
+> description ("No parked Location yet.") so that it stays true when a location is stored but
+> guidance is unavailable (FR-020). Changing any of these is a spec change, not a UI change.
 
 ---
 

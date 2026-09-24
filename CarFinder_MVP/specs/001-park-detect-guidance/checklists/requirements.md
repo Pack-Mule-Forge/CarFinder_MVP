@@ -63,15 +63,12 @@ Under the new definition FINDING holds no location, so these were updated for co
 - **Assumptions** — background location permission added to the granted-permissions assumption;
   FINDING exit conditions documented
 
-### Open concern (non-blocking)
+### Resolved concern (2026-09-24)
 
-Recorded in the spec's Assumptions section rather than raised as a new clarification, since it does
-not block planning:
-
-> Under FR-030, losing signal while a Parked Location *is* stored puts the system in FINDING, which
-> displays "No parked Location yet." — inaccurate in that case, because the location exists and is
-> not lost. A distinct message (e.g. "Location signal unavailable") would fix the wording without
-> changing the state model.
+The earlier open concern — that showing "No parked Location yet." while a Parked Location is stored is
+inaccurate — was resolved by (a) making signal or compass loss a display fallback (FR-030) that does
+not change the parking state, and (b) rewording the FINDING message so it is true in both cases
+(FR-020). Stale live positions are rejected by FR-043.
 
 ### Deliberate technology references
 

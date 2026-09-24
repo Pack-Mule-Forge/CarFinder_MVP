@@ -19,32 +19,42 @@ import android.content.Context
  * Adapts the three request tiers (DRIVING, PARKING, PARKED) to FLP priority levels
  * and update intervals per research.md R-03.
  */
+/**
+ * Priority/interval pair for a Fused Location Provider request. Pure and Context-free so the
+ * tier-to-parameters mapping can be unit tested without an Android runtime.
+ */
+data class LocationRequestParams(val priority: Int, val intervalMillis: Long)
+
+/**
+ * Maps a [LocationRequestTier] to its Fused Location Provider request parameters (research.md R-03).
+ * Structure-only extraction from [LocationProvider.samples]; behavior is unchanged.
+ */
+fun LocationRequestTier.toRequestParams(): LocationRequestParams = when (this) {
+    LocationRequestTier.DRIVING -> {
+        // Balanced accuracy, 15-30 second interval (low power)
+        LocationRequestParams(Priority.PRIORITY_BALANCED_POWER_ACCURACY, 30_000L)
+    }
+
+    LocationRequestTier.PARKING -> {
+        // High accuracy, 5 second interval (PARKING_SAMPLE_INTERVAL from FR-005)
+        LocationRequestParams(Priority.PRIORITY_HIGH_ACCURACY, ParkingConstants.PARKING_SAMPLE_INTERVAL_MILLIS)
+    }
+
+    LocationRequestTier.PARKED -> {
+        // Balanced accuracy, 30-60 second interval (low power, infrequent)
+        LocationRequestParams(Priority.PRIORITY_BALANCED_POWER_ACCURACY, 60_000L)
+    }
+}
+
 @Requirement("FR-005", "FR-014", "SC-010")
-actual class LocationProvider(private val context: Context) {
+class AndroidLocationProvider(private val context: Context) : LocationProvider {
     private val fusedLocationClient: FusedLocationProviderClient by lazy {
         LocationServices.getFusedLocationProviderClient(context)
     }
 
-    actual fun samples(request: LocationRequestTier): Flow<LocationSample> = callbackFlow {
-        val locationRequest = when (request) {
-            LocationRequestTier.DRIVING -> {
-                // Balanced accuracy, 15-30 second interval (low power)
-                LocationRequest.Builder(Priority.PRIORITY_BALANCED_POWER_ACCURACY, 30_000L).build()
-            }
-
-            LocationRequestTier.PARKING -> {
-                // High accuracy, 5 second interval (PARKING_SAMPLE_INTERVAL from FR-005)
-                LocationRequest.Builder(
-                    Priority.PRIORITY_HIGH_ACCURACY,
-                    ParkingConstants.PARKING_SAMPLE_INTERVAL_MILLIS
-                ).build()
-            }
-
-            LocationRequestTier.PARKED -> {
-                // Balanced accuracy, 30-60 second interval (low power, infrequent)
-                LocationRequest.Builder(Priority.PRIORITY_BALANCED_POWER_ACCURACY, 60_000L).build()
-            }
-        }
+    override fun samples(request: LocationRequestTier): Flow<LocationSample> = callbackFlow {
+        val params = request.toRequestParams()
+        val locationRequest = LocationRequest.Builder(params.priority, params.intervalMillis).build()
 
         val locationCallback = object : com.google.android.gms.location.LocationCallback() {
             override fun onLocationResult(result: com.google.android.gms.location.LocationResult) {

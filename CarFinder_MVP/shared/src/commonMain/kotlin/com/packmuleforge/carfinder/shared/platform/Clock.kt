@@ -3,6 +3,6 @@ package com.packmuleforge.carfinder.shared.platform
 /**
  * Platform abstraction for getting the current time. Implemented separately on Android and iOS.
  */
-expect class Clock {
+interface Clock {
     fun nowEpochMillis(): Long
 }

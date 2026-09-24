@@ -11,6 +11,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.sp
 import com.packmuleforge.carfinder.shared.annotation.Requirement
@@ -75,8 +77,7 @@ fun GuidanceDisplay(
         Text(
             text = formattedDistance.value,
             style = TextStyle(fontSize = 24.sp, color = Color.Black),
-            modifier = Modifier.align(Alignment.Center),
-            semantics { testTag = "guidance_distance_text" }
+            modifier = Modifier.align(Alignment.Center).semantics { testTag = "guidance_distance_text" }
         )
     }
 }

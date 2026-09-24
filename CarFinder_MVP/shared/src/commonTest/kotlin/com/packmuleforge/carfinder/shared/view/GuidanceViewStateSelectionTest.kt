@@ -113,13 +113,9 @@ class GuidanceViewStateSelectionTest {
         val result = GuidanceViewStateCalculator.calculate(
             parkingState = ParkingState.PARKED,
             parkedLocation = parkedLoc,
-            currentFix = LocationSample(
-                point = GeoPoint(40.01, -74.01, 5.0),
-                speedMetersPerSecond = 0.5,
-                timestampEpochMillis = 1000L
-            ),
-            deviceHeadingDegreesTrue = null,
-            currentHeadingDegreesTrue = 45.0
+            currentFix = GeoPoint(40.01, -74.01, 5.0),
+            deviceHeading = null,
+            currentHeading = 45.0
         )
         assertIs<GuidanceViewState.NoParkedLocation>(result)
     }

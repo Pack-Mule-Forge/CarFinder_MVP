@@ -1,6 +1,7 @@
 package com.packmuleforge.carfinder.shared.platform
 
 import android.content.Context
+import android.hardware.GeomagneticField
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -22,7 +23,7 @@ import kotlin.math.abs
  * The formula: `deviceHeadingTrueNorth = magneticHeading + declination`.
  */
 @Requirement("FR-024", "FR-027", "SC-004")
-actual class HeadingProvider(private val context: Context) : SensorEventListener {
+class AndroidHeadingProvider(private val context: Context) : HeadingProvider, SensorEventListener {
     private val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
     private val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
 
@@ -40,13 +41,13 @@ actual class HeadingProvider(private val context: Context) : SensorEventListener
         // Handle accuracy changes
     }
 
-    actual fun headingDegrees(): Flow<Double> = callbackFlow {
+    override fun headingDegrees(): Flow<Double> = callbackFlow {
         // Request current location to get the geomagnetic declination at this point
         try {
             @Suppress("MissingPermission")
             fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
                 if (location != null) {
-                    val declination = android.location.GeomagneticField(
+                    val declination = GeomagneticField(
                         location.latitude.toFloat(),
                         location.longitude.toFloat(),
                         location.altitude.toFloat(),

@@ -39,7 +39,7 @@ enum class PermissionStatus {
  * Example: iOS motion APIs require no explicit permission request, so that capability may return
  * NOT_APPLICABLE or observable status rather than being forced into a request/response shape.
  */
-expect class PermissionController {
+interface PermissionController {
     /**
      * Request a permission/capability. Suspends until the user responds or the platform handles
      * the request. Returns the result of the request.

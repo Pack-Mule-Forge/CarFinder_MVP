@@ -11,7 +11,7 @@ import com.packmuleforge.carfinder.shared.annotation.Requirement
  * buffered until we have 3, then every subsequent reading slides the window.
  */
 @Requirement("FR-002", "FR-003", "FR-004", "FR-010", "SC-009")
-class SpeedSmoother {
+open class SpeedSmoother {
     private val window = mutableListOf<Double>()
     private val windowSize = 3
 

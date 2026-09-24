@@ -127,15 +127,20 @@ exactly one of the four outcomes is selected each time.
 1. **Given** the system is in DRIVING and no Parked Location has ever been stored, **When** the app
    is opened, **Then** "Driving - Waiting to Park" is shown — the DRIVING rule outranks the
    no-location rule.
-2. **Given** the system is in FINDING — no Parked Location has been determined — and is not in
-   DRIVING, **When** the app is opened, **Then** "No parked Location yet." is shown.
+2. **Given** the system is in FINDING — no Parked Location is held — and is not in DRIVING,
+   **When** the app is opened, **Then** "Parked location unavailable." is shown.
 3. **Given** the system is in PARKING and has not yet converged, **When** the app is opened, **Then**
    "Sensing you will be Parking Soon." is shown.
 4. **Given** the system is in PARKED and a Parked Location exists, **When** the app is opened,
    **Then** the directional guidance display is shown without the user requesting it.
-5. **Given** the state machine is in no defined state — at first launch after installation, or after
-   an indeterminate condition — **When** the app is opened, **Then** the system is treated as being
-   in FINDING and "No parked Location yet." is shown.
+5. **Given** the app was just installed and no parking cycle has completed, **When** the app is
+   opened, **Then** the system is in FINDING and "Parked location unavailable." is shown.
+6. **Given** the system is in PARKED with a stored Parked Location, **When** no live position fix is
+   available, or the latest live fix is older than `FIX_STALENESS_TIMEOUT`, or no device heading is
+   available, **Then** "Parked location unavailable." is shown instead of guidance, the parking state
+   remains PARKED, and the stored Parked Location is neither altered nor deleted.
+7. **Given** scenario 6 is in effect, **When** a current live fix and a device heading are both
+   available again, **Then** the guidance display returns without any user action.
 
 ---
 
@@ -162,9 +167,9 @@ when there is no location to delete.
 2. **Given** the system is in FINDING and therefore holds no Parked Location, **When** observed speed
    exceeds the driving-speed threshold, **Then** the system enters DRIVING and the absence of a
    location to delete is a no-op rather than an error.
-3. **Given** a Parked Location was deleted by drive-away, **When** the app is next opened in a
-   non-DRIVING state before a new parking cycle completes, **Then** "No parked Location yet." is
-   shown rather than the deleted location.
+3. **Given** a Parked Location was deleted by drive-away, **When** the app is next opened before a
+   new parking cycle completes, **Then** the deleted location is never shown; the DRIVING or PARKING
+   message is shown as the state requires.
 
 ---
 
@@ -195,9 +200,24 @@ when there is no location to delete.
 - **Device rotation during guidance**: geometry stays consistent, sized to the minimum display
   dimension.
 - **Signal lost while a location is stored**: the user is walking back to the car and enters an
-  underground structure. No usable fix is available, so the system falls back to FINDING and shows
-  "No parked Location yet." even though a Parked Location is still stored and will be shown again
-  once signal returns. See the note under Assumptions.
+  underground structure, so the live fix stops updating. Once the latest fix is older than
+  `FIX_STALENESS_TIMEOUT`, the display shows the FINDING view ("Parked location unavailable.")
+  rather than guidance computed from a stale position. The parking state stays PARKED and the stored
+  Parked Location is untouched; guidance returns when a current fix arrives (FR-030, FR-043).
+- **App opened before the first fix**: after a long absence the user opens the app; no live fix or
+  heading has arrived yet. The FINDING view is shown until both are available (FR-030).
+- **Compass unavailable**: no device heading can be obtained. The FINDING view is shown in place of
+  guidance; the parking state is unaffected (FR-030).
+- **App left in the background while parked**: live position and heading collection for guidance
+  stops while the default view is not visible, and starts again when it becomes visible (FR-044). The
+  background state machine is unaffected (FR-014).
+- **Permission denied**: the user declines location permission. The background state machine is not
+  started, the FINDING view is shown, and the app asks again the next time it is opened (FR-045,
+  FR-046). Declining does not crash the app or leave a half-started service.
+- **Background location on newer Android versions**: the platform requires background location to be
+  requested separately, after foreground location, and may send the user to a system Settings screen
+  to choose "Allow all the time". The app requests in that order and continues to work with whatever
+  the user grants (FR-045).
 - **First launch after installation**: no parking cycle has ever run, so the system is in FINDING
   from the outset rather than in an undefined state.
 - **App never opened**: the user installs the app, grants permissions, and drives and parks without
@@ -232,11 +252,11 @@ when there is no location to delete.
 - **FR-008**: While in PARKING with a non-converging sample window, System MUST advance the window by
   one sample on each new sample and re-evaluate, indefinitely — no timeout, no failure state, and no
   transition out of PARKING other than by speed.
-- **FR-009**: System MUST be in FINDING whenever no Parked Location has been determined. This
-  includes the first launch after installation, before any parking cycle has completed, and any
-  period in which a parked location cannot be determined because no usable position signal is
-  available. FINDING is therefore the initial state of a newly installed system, and it is the state
-  in which no Parked Location is held.
+- **FR-009**: System MUST be in FINDING whenever no Parked Location is held. This includes the
+  first launch after installation, before any parking cycle has completed. FINDING is therefore the
+  initial state of a newly installed system. Loss of position signal or of the compass while a
+  Parked Location is held MUST NOT change the parking state; that condition is handled by the
+  display fallback of FR-030.
 - **FR-010**: System MUST delete the current Parked Location and enter DRIVING when observed speed
   exceeds `DRIVING_SPEED_THRESHOLD` while in PARKED or in FINDING. In FINDING no Parked Location is
   held, so the deletion is a no-op and MUST NOT be treated as an error.
@@ -275,15 +295,18 @@ when there is no location to delete.
 - **FR-017**: System MUST present the default view whenever the app is open, with no user action
   required to request it.
 - **FR-018**: System MUST evaluate the following four outcomes in strict priority order and present
-  exactly one of them: (1) DRIVING, (2) no location ever stored and not DRIVING, (3) PARKING,
-  (4) otherwise.
+  exactly one of them: (1) state is DRIVING, (2) state is FINDING, (3) state is PARKING,
+  (4) state is PARKED and guidance is available. When the state is PARKED but guidance is not
+  available (FR-030), the outcome-(2) view is presented instead.
 - **FR-019**: When the state is DRIVING, System MUST show "Driving - Waiting to Park", including when
   no Parked Location has ever been stored.
-- **FR-020**: When the state is FINDING — no Parked Location has been determined — and the state is
-  not DRIVING, System MUST show "No parked Location yet."
+- **FR-020**: When the state is FINDING — no Parked Location is held — and the state is not
+  DRIVING, or when the state is PARKED but guidance is not available (FR-030), System MUST show
+  "Parked location unavailable." This wording is deliberately true in both cases: it makes no claim
+  about whether a location has ever been stored.
 - **FR-021**: When the state is PARKING, System MUST show "Sensing you will be Parking Soon."
-- **FR-022**: When the state is PARKED and a Parked Location exists, System MUST show the
-  directional guidance display.
+- **FR-022**: When the state is PARKED, a Parked Location exists, and guidance is available
+  (FR-030), System MUST show the directional guidance display.
 
 #### Guidance Display
 
@@ -304,11 +327,14 @@ when there is no location to delete.
   display, updating as the user's position changes.
 - **FR-029**: System MUST express that distance in feet when it is at or below
   `DISTANCE_UNIT_THRESHOLD`, and in miles when it is above that threshold.
-- **FR-030**: Whenever the state machine is not in a defined state — including when the current
-  position fix or device heading is unavailable or too degraded to determine a parked location —
-  System MUST fall back to FINDING and present the FINDING view described in FR-020. FINDING is the
-  system's default state, so the four-way selection of FR-018 always resolves to exactly one
-  outcome and no undefined display condition can arise.
+- **FR-030**: Guidance is *available* only when the state is PARKED, a Parked Location is held, a
+  current live position fix exists (FR-043), and a device heading is available. Whenever any of
+  these is missing, System MUST present the FINDING view of FR-020 in place of guidance. This is a
+  display rule only: it MUST NOT change the parking state, and it MUST NOT alter or delete the stored
+  Parked Location, so guidance resumes automatically when current inputs return. Before the first
+  live fix and heading have arrived after the app is opened, the FINDING view is shown. Because the
+  FINDING view is the fallback for every combination not otherwise resolved, the selection in FR-018
+  always resolves to exactly one outcome and no undefined display condition can arise.
 
 #### Arrival
 
@@ -324,7 +350,8 @@ when there is no location to delete.
   MUST NOT duplicate their literal values at any point of use or in any test:
   `PARKING_SPEED_THRESHOLD` (5 mph), `DRIVING_SPEED_THRESHOLD` (25 mph), `CONVERGENCE_RADIUS`
   (10 meters), `CONVERGENCE_SAMPLE_COUNT` (3), `PARKING_SAMPLE_INTERVAL` (5 seconds),
-  `ARRIVAL_CONE_HALF_ANGLE` (45 degrees), `DISTANCE_UNIT_THRESHOLD` (500 feet).
+  `ARRIVAL_CONE_HALF_ANGLE` (45 degrees), `DISTANCE_UNIT_THRESHOLD` (500 feet),
+  `FIX_STALENESS_TIMEOUT` (30 seconds).
 
 #### Automated Test Coverage
 
@@ -353,12 +380,35 @@ when there is no location to delete.
 - **FR-042**: The default view MUST render from state exposed by the shared domain layer; view state
   MUST NOT be computed or owned inside the user-interface layer.
 
+#### Live Input Freshness and Lifecycle
+
+- **FR-043**: A live position fix is *current* when it was received no more than
+  `FIX_STALENESS_TIMEOUT` ago. A fix that is not current MUST NOT be used to compute guidance, and
+  currency MUST be re-evaluated over time, not only when a new fix arrives, so that a fix which goes
+  stale because updates stopped is detected.
+- **FR-044**: Live position and heading collection for the guidance display MUST run only while the
+  default view is visible to the user, and MUST stop when it is not. This MUST NOT affect the
+  background state machine of FR-014.
+
+#### Permissions
+
+- **FR-045**: On first launch, and on any later launch while a required permission is not granted,
+  System MUST request the permissions it needs, while the app is visible, in the order the platform
+  requires: precise location first, then background location, then physical-activity recognition and
+  notifications where the platform version requires them. System MUST NOT repeat a request within the
+  same app session after the user has declined it.
+- **FR-046**: System MUST start the background parking state machine (FR-010a) only after location
+  permission has been granted, and MUST start it automatically when permission is granted — without
+  the user having to restart the app. While location permission is not granted, System MUST show the
+  FINDING view (FR-020), MUST NOT present guidance, and MUST NOT start the background service. After
+  a device restart, the service MUST be restarted only if the permission is still granted.
+
 ### Key Entities
 
 - **Parking State**: The single current lifecycle position — DRIVING, PARKING, PARKED, or FINDING.
   Persisted alongside the Parked Location. FINDING is the default and initial state, meaning no
-  Parked Location has been determined; PARKED is the state in which a location is held and guidance
-  is shown, including while the user walks back to the vehicle.
+  Parked Location is held; PARKED is the state in which a location is held and guidance is shown,
+  including while the user walks back to the vehicle.
 - **Location Sample**: One observation taken during PARKING. Carries a position, a reported accuracy
   radius, an observed speed, and a timestamp. Consumed in windows of `CONVERGENCE_SAMPLE_COUNT`.
 - **Parked Location**: Where the vehicle is believed to be. Carries the centroid position of the
@@ -369,7 +419,7 @@ when there is no location to delete.
 - **Guidance View State**: The derived, displayable description of the current moment — which of the
   four views applies, and when guidance applies, the distance, the distance unit, the display
   bearing, the cone half-angle, and whether arrival has been reached.
-- **Configuration Constants**: The seven named tuning values of FR-034, read by both the domain logic
+- **Configuration Constants**: The eight named tuning values of FR-034, read by both the domain logic
   and its tests.
 
 ## Success Criteria *(mandatory)*
@@ -408,6 +458,13 @@ when there is no location to delete.
 - **SC-012**: Opening, backgrounding, or closing the app at any point in a park cycle changes
   neither the resulting state sequence nor the captured location, compared with an identical trial
   in which the app is never opened.
+- **SC-013**: When live position or compass input is lost, the display shows the FINDING view within
+  `FIX_STALENESS_TIMEOUT` and never presents guidance computed from a non-current fix; guidance
+  returns without user action once current inputs are available again.
+- **SC-014**: On a fresh install, a user who accepts the permission prompts reaches a running
+  background state machine with no further action — no app restart, and no visit to system Settings
+  except the platform's own "Allow all the time" screen where the platform requires it. A user who
+  declines location permission sees the FINDING view and a service that is not running.
 
 ## Out of Scope
 
@@ -425,24 +482,30 @@ decisions made here:
   fuller rendering is a deferred refinement.
 - Automatic derivation of traceability from commit diffs (backward traceability). FR-038 through
   FR-040 specify forward traceability only.
+- **Deferred to the production version.** This MVP is a pre-production build whose purpose is to show
+  that a viable product can be produced from requirements; each of the following will receive its
+  own requirements later: a distinct signal-loss state or status message separate from FINDING; a
+  "Getting your location…" message while the first fix is acquired; battery and location-request
+  optimization beyond FR-044; arbitration between the background and guidance location requests;
+  handling of a very poor live fix that widens the cone into a false arrival; permission rationale
+  screens, Settings deep-links for permanently denied permissions, and any degraded mode beyond
+  FR-046.
 
 ## Assumptions
 
-- The user grants the location and motion permissions the app requests, **including the background
-  location permission** that FR-014 requires. Permission-denied handling is not specified here.
-- FINDING is exited to PARKED when a usable position fix returns and a Parked Location is available,
-  and to DRIVING when observed speed exceeds `DRIVING_SPEED_THRESHOLD`. The source description did
-  not state FINDING's exit conditions; these are the minimum needed for the state machine to be
-  closed.
-- **Signal loss and the FINDING fallback**: When position signal is lost or degraded while a Parked
-  Location exists, the system transitions to FINDING (per FR-030) and displays "No parked Location
-  yet." This message is technically inaccurate in that case — the location exists but guidance cannot
-  be rendered because position updates are unavailable. This trade-off is intentional: using FINDING
-  as the unified default state simplifies the state machine and ensures the system never enters an
-  undefined state. The suppressed guidance during signal loss is the correct safety behavior (do not
-  show stale guidance if you cannot refresh the cone). If user-facing distinction between
-  "never parked" and "signal lost" becomes important, add a parallel status-message variant for
-  signal-loss conditions without changing the state model.
+- The user is asked for the location, motion and notification permissions the app needs, **including
+  the background location permission** that FR-014 requires (FR-045). If location permission is not
+  granted the app stays inert and shows the FINDING view (FR-046); rationale screens, Settings
+  deep-links and degraded modes are deferred to the production version.
+- FINDING is exited only to DRIVING, when observed speed exceeds `DRIVING_SPEED_THRESHOLD`. The
+  source description did not state FINDING's exit conditions; this is the minimum needed for the
+  state machine to be closed. PARKED is entered only from PARKING, by convergence (FR-006).
+- **Signal loss and the FINDING view**: While a Parked Location is held, loss of the live position
+  fix or of the compass does not change the parking state (FR-009). The display instead falls back
+  to the FINDING view (FR-030), and the wording of FR-020 is deliberately accurate whether or not a
+  location is stored. Showing no guidance is preferred over showing guidance that may be wrong: for
+  this MVP the product should appear incomplete rather than incorrect. A distinct signal-loss
+  treatment is deferred to the production version (see Out of Scope).
 - Speed is derived from the device's own location provider, not from any vehicle integration.
 - A single current parked location is tracked at a time. Multi-vehicle support is not in scope.
 - The bearing and distance math required for guidance reuses an existing prior implementation rather
@@ -454,9 +517,11 @@ decisions made here:
   `ARRIVAL_CONE_HALF_ANGLE` — and returns. The "You have arrived" message itself continues to show
   for as long as the arrival condition holds.
 - The three status messages are shown with their exact wording as quoted in FR-019 through FR-021,
-  including the existing capitalization and punctuation.
+  including the existing capitalization and punctuation. The FINDING message was reworded from the
+  source description's "No parked Location yet." so that it stays true when a location is stored but
+  guidance is unavailable (FR-020).
 - While in PARKED, location sampling may run at a lower rate than `PARKING_SAMPLE_INTERVAL`, since
-  the elevated rate exists to achieve convergence. Guidance updates while in FINDING are driven by
-  position updates rather than by that interval.
+  the elevated rate exists to achieve convergence. Guidance updates while in PARKED are driven by
+  position updates from the guidance path (FR-044) rather than by that interval.
 - Speed observations may be noisy; the thresholds in FR-002 through FR-004 are evaluated against the
   speed reported with each location update.

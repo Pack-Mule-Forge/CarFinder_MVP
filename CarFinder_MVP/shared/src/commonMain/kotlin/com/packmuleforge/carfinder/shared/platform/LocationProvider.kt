@@ -19,6 +19,6 @@ enum class LocationRequestTier {
  * Platform abstraction for location samples. Yields a continuous Flow of LocationSample objects
  * as the device's position changes. Updates cease when the consumer unsubscribes.
  */
-expect class LocationProvider {
+interface LocationProvider {
     fun samples(request: LocationRequestTier): Flow<LocationSample>
 }

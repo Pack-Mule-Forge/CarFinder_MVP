@@ -17,6 +17,6 @@ enum class VehicleTransition {
  * On platforms that do not support activity recognition or where permission is denied,
  * implementations should return an empty flow (no transitions) so correctness is unaffected.
  */
-expect class ActivityRecognizer {
+interface ActivityRecognizer {
     fun inVehicleTransitions(): Flow<VehicleTransition>
 }

@@ -90,7 +90,7 @@ class DriveAwayTest {
             point = GeoPoint(40.0, -74.0, 5.0),
             capturedAtEpochMillis = 100L
         )
-        repository.save(parkedLoc)
+        repository.save(ParkingState.PARKED, parkedLoc)
 
         // Simulate drive-away deletion
         repository.clearLocation()

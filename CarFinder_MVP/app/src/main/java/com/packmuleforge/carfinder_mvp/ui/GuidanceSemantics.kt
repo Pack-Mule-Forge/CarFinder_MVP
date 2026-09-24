@@ -2,6 +2,7 @@ package com.packmuleforge.carfinder_mvp.ui
 
 import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTag
 
 /**
  * Custom semantics properties for UI testing of the guidance display.

@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * The request function is safe to call with no Activity available (returns Denied, never throws).
  */
 @Requirement("FR-014", "SC-010")
-actual class PermissionController(private val context: Context) {
+class AndroidPermissionController(private val context: Context) : PermissionController {
     private val statusMap: MutableMap<Capability, MutableStateFlow<PermissionStatus>> = mutableMapOf(
         Capability.LOCATION to MutableStateFlow(PermissionStatus.DENIED),
         Capability.BACKGROUND_LOCATION to MutableStateFlow(PermissionStatus.DENIED),
@@ -30,7 +30,7 @@ actual class PermissionController(private val context: Context) {
         updateStatus()
     }
 
-    actual suspend fun request(capability: Capability): PermissionResult {
+    override suspend fun request(capability: Capability): PermissionResult {
         // Since we don't have access to an Activity from the shared module,
         // this is a no-op. The service (T040) is responsible for requesting permissions
         // and calling this controller's status() to observe changes.
@@ -48,7 +48,7 @@ actual class PermissionController(private val context: Context) {
         }
     }
 
-    actual fun status(capability: Capability): Flow<PermissionStatus> {
+    override fun status(capability: Capability): Flow<PermissionStatus> {
         return statusMap.getOrPut(capability) { MutableStateFlow(PermissionStatus.NOT_APPLICABLE) }
     }
 

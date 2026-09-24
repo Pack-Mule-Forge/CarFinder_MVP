@@ -5,6 +5,11 @@ import android.content.Intent
 import androidx.core.content.ContextCompat
 import com.packmuleforge.carfinder.shared.annotation.Requirement
 import com.packmuleforge.carfinder.shared.platform.ActivityRecognizer
+import com.packmuleforge.carfinder.shared.platform.AndroidActivityRecognizer
+import com.packmuleforge.carfinder.shared.platform.AndroidClock
+import com.packmuleforge.carfinder.shared.platform.AndroidHeadingProvider
+import com.packmuleforge.carfinder.shared.platform.AndroidLocationProvider
+import com.packmuleforge.carfinder.shared.platform.AndroidPermissionController
 import com.packmuleforge.carfinder.shared.platform.Clock
 import com.packmuleforge.carfinder.shared.platform.HeadingProvider
 import com.packmuleforge.carfinder.shared.platform.LocationProvider
@@ -22,27 +27,27 @@ import com.packmuleforge.carfinder_mvp.service.ParkingDetectionService
 class CarFinderApplication : Application() {
     // Singletons
     val repository: ParkedLocationRepository by lazy {
-        DataStoreParkedLocationRepository(this)
+        DataStoreParkedLocationRepository.create(this)
     }
 
     val clock: Clock by lazy {
-        Clock()
+        AndroidClock()
     }
 
     val locationProvider: LocationProvider by lazy {
-        LocationProvider(this)
+        AndroidLocationProvider(this)
     }
 
     val headingProvider: HeadingProvider by lazy {
-        HeadingProvider()
+        AndroidHeadingProvider(this)
     }
 
     val permissionController: PermissionController by lazy {
-        PermissionController(this)
+        AndroidPermissionController(this)
     }
 
     val activityRecognizer: ActivityRecognizer by lazy {
-        ActivityRecognizer(this)
+        AndroidActivityRecognizer(this)
     }
 
     val stateMachine: ParkingStateMachine by lazy {

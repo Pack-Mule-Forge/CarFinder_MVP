@@ -10,6 +10,6 @@ import kotlinx.coroutines.flow.Flow
  * The heading is derived from the device's magnetic sensor and corrected to true north using the
  * geomagnetic field declination at the user's current location.
  */
-expect class HeadingProvider {
+interface HeadingProvider {
     fun headingDegrees(): Flow<Double>
 }

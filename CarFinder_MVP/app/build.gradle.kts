@@ -49,12 +49,18 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    // ADDED: gives MainActivity the Compose viewModel() function (was an unresolved reference).
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.play.services.location)
     implementation(libs.androidx.datastore.proto)
     // ADDED: runtime library needed by the code protobuf generates (moved here from `shared`).
     implementation(libs.protobuf.kotlin)
     testImplementation(libs.junit)
+    // ADDED: some app unit tests use kotlin.test.Test / assertTrue; kotlin-test-junit maps them onto JUnit4.
+    testImplementation(libs.kotlin.test.junit)
+    // ADDED: runTest { } for coroutine-based app tests (e.g. the DataStore repository test).
+    testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)

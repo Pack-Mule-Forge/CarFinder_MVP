@@ -2,9 +2,9 @@ package com.packmuleforge.carfinder.shared.platform
 
 import android.content.Context
 import com.google.android.gms.location.ActivityRecognition
+import com.google.android.gms.location.ActivityTransition
 import com.google.android.gms.location.ActivityTransitionRequest
 import com.google.android.gms.location.DetectedActivity
-import com.google.android.gms.location.TransitionRequest
 import com.packmuleforge.carfinder.shared.annotation.Requirement
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -16,17 +16,17 @@ import kotlinx.coroutines.flow.callbackFlow
  * flow so correctness is unaffected (R-07).
  */
 @Requirement("FR-014", "SC-010")
-actual class ActivityRecognizer(private val context: Context) {
-    actual fun inVehicleTransitions(): Flow<VehicleTransition> = callbackFlow {
+class AndroidActivityRecognizer(private val context: Context) : ActivityRecognizer {
+    override fun inVehicleTransitions(): Flow<VehicleTransition> = callbackFlow {
         val transitions = listOf(
-            ActivityTransitionRequest(
-                DetectedActivity.IN_VEHICLE,
-                TransitionRequest.ACTIVITY_TRANSITION_ENTER
-            ),
-            ActivityTransitionRequest(
-                DetectedActivity.IN_VEHICLE,
-                TransitionRequest.ACTIVITY_TRANSITION_EXIT
-            )
+            ActivityTransition.Builder()
+                .setActivityType(DetectedActivity.IN_VEHICLE)
+                .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_ENTER)
+                .build(),
+            ActivityTransition.Builder()
+                .setActivityType(DetectedActivity.IN_VEHICLE)
+                .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_EXIT)
+                .build()
         )
 
         val request = ActivityTransitionRequest(transitions)
@@ -40,7 +40,7 @@ actual class ActivityRecognizer(private val context: Context) {
         try {
             @Suppress("MissingPermission")
             ActivityRecognition.getClient(context)
-                .requestActivityTransitions(request, pendingIntent)
+                .requestActivityTransitionUpdates(request, pendingIntent)
         } catch (e: SecurityException) {
             // Permission denied or unavailable; return empty flow
             close()
@@ -50,7 +50,7 @@ actual class ActivityRecognizer(private val context: Context) {
         awaitClose {
             try {
                 @Suppress("MissingPermission")
-                ActivityRecognition.getClient(context).removeActivityTransitions(pendingIntent)
+                ActivityRecognition.getClient(context).removeActivityTransitionUpdates(pendingIntent)
             } catch (e: SecurityException) {
                 // Ignore errors during cleanup
             }

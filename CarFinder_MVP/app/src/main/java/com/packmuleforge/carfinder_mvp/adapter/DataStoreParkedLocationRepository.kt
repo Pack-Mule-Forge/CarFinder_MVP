@@ -19,17 +19,39 @@ import java.io.InputStream
 import java.io.OutputStream
 
 /**
+ * Serializer for the persisted parking data proto. Internal (not private) so tests can pass it to
+ * their own `DataStoreFactory.create(...)` against a temporary file (T031).
+ */
+internal object ParkingDataSerializer : Serializer<ParkingDataProto.ParkingData> {
+    override val defaultValue: ParkingDataProto.ParkingData = ParkingDataProto.ParkingData.newBuilder()
+        .setState(ParkingDataProto.ParkingData.State.FINDING)
+        .build()
+
+    override suspend fun readFrom(input: InputStream): ParkingDataProto.ParkingData {
+        return try {
+            ParkingDataProto.ParkingData.parseFrom(input)
+        } catch (e: Exception) {
+            defaultValue
+        }
+    }
+
+    override suspend fun writeTo(t: ParkingDataProto.ParkingData, output: OutputStream) {
+        t.writeTo(output)
+    }
+}
+
+/**
  * Android implementation of ParkedLocationRepository using Proto DataStore.
  * Provides atomic persistence of parking state and location (FR-011).
+ *
+ * Takes the [DataStore] directly (rather than a [Context]) so it can be constructed against a
+ * temporary file in tests, with no Robolectric or MockK (T031). Production callers should use
+ * [DataStoreParkedLocationRepository.create].
  */
 @Requirement("FR-011", "FR-012", "FR-013", "FR-014")
 class DataStoreParkedLocationRepository(
-    context: Context
+    private val dataStore: DataStore<ParkingDataProto.ParkingData>
 ) : ParkedLocationRepository {
-    private val dataStore: DataStore<ParkingDataProto.ParkingData> = context.createDataStore(
-        fileName = "parking_data.pb",
-        serializer = ParkingDataSerializer
-    )
 
     override fun observe(): Flow<PersistedParkingData> {
         return dataStore.data.map { proto ->
@@ -114,32 +136,13 @@ class DataStoreParkedLocationRepository(
     }
 
     companion object {
-        private object ParkingDataSerializer : Serializer<ParkingDataProto.ParkingData> {
-            override val defaultValue: ParkingDataProto.ParkingData = ParkingDataProto.ParkingData.newBuilder()
-                .setState(ParkingDataProto.ParkingData.State.FINDING)
-                .build()
-
-            override suspend fun readFrom(input: InputStream): ParkingDataProto.ParkingData {
-                return try {
-                    ParkingDataProto.ParkingData.parseFrom(input)
-                } catch (e: Exception) {
-                    defaultValue
-                }
-            }
-
-            override suspend fun writeTo(t: ParkingDataProto.ParkingData, output: OutputStream) {
-                t.writeTo(output)
-            }
+        /** Production factory: builds the real file-backed DataStore from an Android [Context]. */
+        fun create(context: Context): DataStoreParkedLocationRepository {
+            val dataStore: DataStore<ParkingDataProto.ParkingData> = androidx.datastore.core.DataStoreFactory.create(
+                serializer = ParkingDataSerializer,
+                produceFile = { context.dataStoreFile("parking_data.pb") }
+            )
+            return DataStoreParkedLocationRepository(dataStore)
         }
     }
-}
-
-private fun <T> Context.createDataStore(
-    fileName: String,
-    serializer: Serializer<T>
-): DataStore<T> {
-    return androidx.datastore.core.DataStoreFactory.create(
-        serializer = serializer,
-        produceFile = { dataStoreFile(fileName) }
-    )
 }
