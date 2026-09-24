@@ -29,6 +29,6 @@ class FakeParkedLocationRepository(
     }
 
     override suspend fun clearLocation() {
-        stateFlow.value = PersistedParkingData(stateFlow.value.state, null)
+        stateFlow.value = PersistedParkingData(ParkingState.FINDING, null)
     }
 }

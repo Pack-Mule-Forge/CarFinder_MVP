@@ -12,6 +12,7 @@ import com.packmuleforge.carfinder.shared.repository.ParkedLocationRepository
 import com.packmuleforge.carfinder.shared.repository.PersistedParkingData
 import com.packmuleforge.carfinder_mvp.data.parkingData
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import com.packmuleforge.carfinder_mvp.data.ParkingDataProto
 import androidx.datastore.core.Serializer
@@ -60,16 +61,7 @@ class DataStoreParkedLocationRepository(
     }
 
     override suspend fun load(): PersistedParkingData {
-        return dataStore.data.map { proto ->
-            proto.toPersistedData()
-        }.let { flow ->
-            // Collect first emission
-            var result = PersistedParkingData(ParkingState.FINDING, null)
-            flow.collect { data ->
-                result = data
-            }
-            result
-        }
+        return dataStore.data.first().toPersistedData()
     }
 
     override suspend fun save(state: ParkingState, parkedLocation: ParkedLocation?) {
@@ -96,6 +88,7 @@ class DataStoreParkedLocationRepository(
         dataStore.updateData { currentData ->
             currentData.toBuilder().apply {
                 clearParkedLocation()
+                state = ParkingDataProto.ParkingData.State.FINDING
             }.build()
         }
     }

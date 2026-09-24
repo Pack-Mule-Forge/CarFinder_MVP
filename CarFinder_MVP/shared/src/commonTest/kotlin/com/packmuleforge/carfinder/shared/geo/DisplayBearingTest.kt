@@ -31,10 +31,10 @@ class DisplayBearingTest {
 
     @Test
     fun displayBearingEastPointing() {
-        // Device heading E (90°), car is E (bearing 90°) → display should be E (90°)
+        // Device heading E (90°), car is E (bearing 90°) → car is straight ahead, display 0°
         val deviceHeading = 90.0
         val bearingToCar = 90.0
-        val expected = 90.0
+        val expected = 0.0
 
         val displayBearing = ConeGeometry.displayBearing(deviceHeading, bearingToCar)
         assertTrue(abs(displayBearing - expected) < 0.1)

@@ -5,6 +5,7 @@ import com.packmuleforge.carfinder.shared.fake.FakeParkedLocationRepository
 import com.packmuleforge.carfinder.shared.model.GeoPoint
 import com.packmuleforge.carfinder.shared.model.ParkedLocation
 import com.packmuleforge.carfinder.shared.model.ParkingState
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -80,15 +81,9 @@ class ParkedLocationRepositoryContractTest {
             initialLocation = location
         )
 
-        var emittedState: ParkingState? = null
-        var emittedLocation: ParkedLocation? = null
+        val data = repo.observe().first()
 
-        repo.observe().collect { data ->
-            emittedState = data.state
-            emittedLocation = data.parkedLocation
-        }
-
-        assertEquals(ParkingState.PARKED, emittedState)
-        assertEquals(location.point.latitudeDegrees, emittedLocation?.point?.latitudeDegrees)
+        assertEquals(ParkingState.PARKED, data.state)
+        assertEquals(location.point.latitudeDegrees, data.parkedLocation?.point?.latitudeDegrees)
     }
 }

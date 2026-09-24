@@ -96,6 +96,6 @@ class DriveAwayTest {
         repository.clearLocation()
 
         val loadedLoc = repository.load()
-        assertNull(loadedLoc)
+        assertNull(loadedLoc.parkedLocation)
     }
 }

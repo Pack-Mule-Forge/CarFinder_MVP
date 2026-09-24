@@ -66,9 +66,9 @@ class ConvergenceWindowTest {
     fun slidesWindowOnNonConvergenceWithoutTimeout() {
         val window = ConvergenceWindow()
         val sample1 = createSample(0.0, 0.0, 0.0)
-        val sample2 = createSample(0.0001, 0.0001, 1.0)      // Far from sample 1
-        val sample3 = createSample(0.00013, 0.00013, 2.0)    // Far from both
-        val sample4 = createSample(0.00016, 0.00016, 3.0)    // Far from all
+        val sample2 = createSample(0.0002, 0.0002, 1.0)      // Far from sample 1
+        val sample3 = createSample(0.0004, 0.0004, 2.0)      // Far from both
+        val sample4 = createSample(0.0006, 0.0006, 3.0)      // Far from all
 
         window.add(sample1)
         assertFalse(window.isConverged(), "Single sample should not converge")

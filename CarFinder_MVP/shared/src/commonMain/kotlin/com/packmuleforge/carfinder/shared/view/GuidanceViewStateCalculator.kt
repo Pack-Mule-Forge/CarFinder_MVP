@@ -32,8 +32,8 @@ object GuidanceViewStateCalculator {
             return GuidanceViewState.Driving
         }
 
-        // 2. No location ever stored (FINDING) → "No parked Location yet."
-        if (parkedLocation == null) {
+        // 2. FINDING → "No parked Location yet."
+        if (parkingState == ParkingState.FINDING) {
             return GuidanceViewState.NoParkedLocation
         }
 
@@ -42,9 +42,8 @@ object GuidanceViewStateCalculator {
             return GuidanceViewState.ParkingSoon
         }
 
-        // 4. Otherwise (PARKED with location) → Guidance
-        // But verify we have the required inputs
-        if (parkingState == ParkingState.PARKED && currentFix != null && deviceHeading != null && currentHeading != null) {
+        // 4. PARKED with a location and the required inputs → Guidance; otherwise fall back
+        if (parkingState == ParkingState.PARKED && parkedLocation != null && currentFix != null && deviceHeading != null && currentHeading != null) {
             val distance = Geodesy.distanceMeters(parkedLocation.point, currentFix)
             val bearing = Geodesy.trueBearingDegrees(currentFix, parkedLocation.point)
             val uncertainty = UncertaintyCalculator.calculate(parkedLocation.point, currentFix)
