@@ -8,7 +8,7 @@ import kotlin.math.atan
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
-@Requirement("FR-023", "FR-031", "FR-037")
+@Requirement("FR-023", "FR-031", "FR-035", "FR-037")
 class ConeGeometryHalfAngleTest {
     @Test
     fun coneHalfAngleEqualsAtanOfUncertaintyOverDistance() {

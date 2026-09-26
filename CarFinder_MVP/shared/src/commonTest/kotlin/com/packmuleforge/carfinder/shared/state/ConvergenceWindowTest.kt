@@ -9,7 +9,7 @@ import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-@Requirement("FR-006", "FR-008", "FR-037")
+@Requirement("FR-006", "FR-008", "FR-035", "FR-037")
 class ConvergenceWindowTest {
     @Test
     fun holdsAtMostConvergenceSampleCount() {

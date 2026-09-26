@@ -3,7 +3,7 @@ package com.packmuleforge.carfinder_mvp.ui
 import com.packmuleforge.carfinder.shared.annotation.Requirement
 import org.junit.Test
 
-@Requirement("FR-019", "FR-020", "FR-021")
+@Requirement("FR-019", "FR-020", "FR-021", "FR-036")
 class StatusMessageTest {
 
     @Test
@@ -16,7 +16,7 @@ class StatusMessageTest {
 
     @Test
     fun noParkedLocationRendersCorrectMessage() {
-        // FR-020: NoParkedLocation state renders "No parked Location yet."
+        // FR-020: NoParkedLocation state renders "Parked location unavailable."
         // Placeholder until Compose test setup is complete.
     }
 

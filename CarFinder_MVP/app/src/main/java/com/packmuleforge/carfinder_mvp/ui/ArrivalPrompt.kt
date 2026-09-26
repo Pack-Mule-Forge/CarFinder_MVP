@@ -18,6 +18,24 @@ import androidx.compose.ui.unit.sp
 import com.packmuleforge.carfinder.shared.annotation.Requirement
 
 /**
+ * The "You have arrived" message on its own, with no question or buttons. Shown once the arrival
+ * prompt has been answered and dismissed, for as long as arrival continues to hold (FR-033,
+ * Assumptions: "The 'You have arrived' message itself continues to show for as long as the
+ * arrival condition holds").
+ */
+@Requirement("FR-031", "FR-033")
+@Composable
+fun ArrivedMessage(modifier: Modifier = Modifier) {
+    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text(
+            text = "You have arrived",
+            fontSize = 28.sp,
+            modifier = Modifier.padding(24.dp).semantics { testTag = "arrival_message" }
+        )
+    }
+}
+
+/**
  * Arrival confirmation prompt. Shown when the cone half-angle reaches the arrival threshold,
  * replacing the guidance cone. User can answer "Yes" or "No"; neither affects the parking
  * state or location (FR-033).

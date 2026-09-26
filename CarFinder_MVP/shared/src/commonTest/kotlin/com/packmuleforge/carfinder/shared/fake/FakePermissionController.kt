@@ -16,7 +16,10 @@ class FakePermissionController : PermissionController {
     private val statusMap: MutableMap<Capability, MutableStateFlow<PermissionStatus>> = mutableMapOf(
         Capability.LOCATION to MutableStateFlow(PermissionStatus.GRANTED),
         Capability.BACKGROUND_LOCATION to MutableStateFlow(PermissionStatus.GRANTED),
-        Capability.ACTIVITY_RECOGNITION to MutableStateFlow(PermissionStatus.GRANTED)
+        Capability.ACTIVITY_RECOGNITION to MutableStateFlow(PermissionStatus.GRANTED),
+        // T110/CR-5 deviation: default GRANTED, matching the other three, now that Capability has
+        // a NOTIFICATIONS entry (FR-045).
+        Capability.NOTIFICATIONS to MutableStateFlow(PermissionStatus.GRANTED)
     )
 
     override suspend fun request(capability: Capability): PermissionResult {

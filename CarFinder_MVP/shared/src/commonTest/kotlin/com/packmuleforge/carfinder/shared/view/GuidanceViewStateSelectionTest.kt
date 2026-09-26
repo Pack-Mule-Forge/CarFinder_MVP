@@ -9,7 +9,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 
-@Requirement("FR-018", "FR-019", "FR-020", "FR-021", "FR-030")
+@Requirement("FR-018", "FR-019", "FR-020", "FR-021", "FR-030", "FR-035")
 class GuidanceViewStateSelectionTest {
 
     @Test

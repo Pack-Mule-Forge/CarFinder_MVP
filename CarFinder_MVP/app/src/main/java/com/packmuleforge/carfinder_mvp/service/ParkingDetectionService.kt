@@ -1,12 +1,15 @@
 package com.packmuleforge.carfinder_mvp.service
 
+import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import com.packmuleforge.carfinder.shared.annotation.Requirement
 import com.packmuleforge.carfinder.shared.platform.LocationRequestTier
 import com.packmuleforge.carfinder.shared.state.ParkingStateMachine
@@ -17,6 +20,14 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 /**
+ * Pure decision for CR-13: Android's own START_STICKY restart can re-enter [ParkingDetectionService.onCreate]
+ * with location permission already revoked, independent of any app code path. Extracted so the
+ * shutdown branch is JVM-testable without a real Service/Context.
+ */
+internal fun requiresLocationPermissionShutdown(hasLocationPermission: Boolean): Boolean =
+    !hasLocationPermission
+
+/**
  * Foreground service that owns the parking state machine and runs parking detection continuously
  * in the background, independent of app visibility (FR-014, FR-010a).
  *
@@ -24,7 +35,7 @@ import kotlinx.coroutines.launch
  * It feeds location samples from the LocationProvider to the state machine and adjusts location
  * tiers on state changes.
  */
-@Requirement("FR-014", "FR-010a", "SC-011", "SC-012")
+@Requirement("FR-014", "FR-010a", "FR-032a", "SC-011", "SC-012")
 class ParkingDetectionService : Service() {
     private val job = Job()
     private val scope = CoroutineScope(Dispatchers.Main + job)
@@ -34,6 +45,20 @@ class ParkingDetectionService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+
+        // CR-13: Android can re-enter onCreate() via the service's own START_STICKY restart
+        // after the process is killed, with no app code involved and no guarantee location is
+        // still granted (e.g. revoked via Settings while the service was running). Must be the
+        // very first check, before the notification channel or startForeground().
+        val hasLocationPermission = ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (requiresLocationPermissionShutdown(hasLocationPermission)) {
+            stopSelf()
+            return
+        }
 
         // Initialize dependencies from the application's DI container
         val app = application as? com.packmuleforge.carfinder_mvp.CarFinderApplication

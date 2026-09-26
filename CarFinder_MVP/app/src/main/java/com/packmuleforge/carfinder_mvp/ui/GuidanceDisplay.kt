@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -29,7 +30,7 @@ import kotlin.math.sin
  *
  * When arrival is reached, replaces the cone with an arrival confirmation prompt (FR-031, FR-032).
  */
-@Requirement("FR-023", "FR-025", "FR-026", "FR-027", "FR-028", "FR-031", "FR-032", "SC-004")
+@Requirement("FR-023", "FR-025", "FR-026", "FR-027", "FR-028", "FR-031", "FR-032", "FR-033", "SC-004")
 @Composable
 fun GuidanceDisplay(
     distanceMeters: State<Double>,
@@ -37,15 +38,22 @@ fun GuidanceDisplay(
     displayBearingDegrees: State<Double>,
     coneHalfAngleRadians: State<Double>,
     hasArrived: State<Boolean>,
+    promptDismissed: State<Boolean> = mutableStateOf(false),
     onArrivalAnswered: (yesClicked: Boolean) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    // FR-031, FR-032: Replace cone with arrival prompt when arrival condition is met
+    // FR-031, FR-032: Replace cone with arrival prompt when arrival condition is met.
+    // FR-033: once answered, keep showing the arrival message but not the question/buttons,
+    // until arrival is left and re-entered (promptDismissed resets upstream at that point).
     if (hasArrived.value) {
-        ArrivalPrompt(
-            onAnswered = onArrivalAnswered,
-            modifier = modifier
-        )
+        if (promptDismissed.value) {
+            ArrivedMessage(modifier = modifier)
+        } else {
+            ArrivalPrompt(
+                onAnswered = onArrivalAnswered,
+                modifier = modifier
+            )
+        }
         return
     }
 

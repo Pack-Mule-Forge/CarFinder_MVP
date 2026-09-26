@@ -17,6 +17,7 @@ import com.packmuleforge.carfinder.shared.platform.PermissionController
 import com.packmuleforge.carfinder.shared.repository.ParkedLocationRepository
 import com.packmuleforge.carfinder.shared.state.ParkingStateMachine
 import com.packmuleforge.carfinder_mvp.adapter.DataStoreParkedLocationRepository
+import com.packmuleforge.carfinder_mvp.permission.PermissionFlowCoordinator
 import com.packmuleforge.carfinder_mvp.service.ParkingDetectionService
 
 /**
@@ -54,11 +55,27 @@ class CarFinderApplication : Application() {
         ParkingStateMachine(repository, clock)
     }
 
+    // T110/T111 (CR-5 fix): sequences the FR-045 permission requests and is the sole trigger for
+    // starting the service, exactly once, the moment location is granted (FR-046) — no unconditional
+    // start here anymore, and no app restart is required.
+    val permissionFlowCoordinator: PermissionFlowCoordinator by lazy {
+        PermissionFlowCoordinator(
+            permissionController = permissionController,
+            onLocationGranted = ::startParkingService
+        )
+    }
+
     override fun onCreate() {
         super.onCreate()
+        // T111 (CR-5 fix): the unconditional startForegroundService() that used to live here
+        // called startForeground() with a "location" service type before location permission was
+        // ever granted, throwing SecurityException on every fresh install. Starting the service is
+        // now driven exclusively by permissionFlowCoordinator's onLocationGranted callback, invoked
+        // from MainActivity once the user actually grants location (FR-045, FR-046).
+    }
 
-        // Start the parking detection service (FR-010a: start after permission grant)
-        // In a real app, this would be conditioned on permissions being granted
+    /** FR-046: start the background parking service. Called only after location is granted. */
+    fun startParkingService() {
         val serviceIntent = Intent(this, ParkingDetectionService::class.java)
         ContextCompat.startForegroundService(this, serviceIntent)
     }

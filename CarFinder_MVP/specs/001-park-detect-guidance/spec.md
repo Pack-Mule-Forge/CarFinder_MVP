@@ -341,13 +341,16 @@ when there is no location to delete.
 - **FR-031**: System MUST replace the cone with a "You have arrived" message when the computed cone
   half-angle reaches `ARRIVAL_CONE_HALF_ANGLE`.
 - **FR-032**: On arrival, System MUST show a confirmation prompt reading "Do you see your car?"
+- **FR-032a**: The foreground-service notification (required by FR-014 on Android 8+) MUST read
+  title "Car Finder" and text "Monitoring for parking" (owner decision 2026-09-26, R1-U3; exact string, no trailing period, matching the implemented notification).
 - **FR-033**: System MUST dismiss the arrival prompt on either answer, and MUST NOT change the
   parking state or clear the Parked Location as a result of either answer.
 
 #### Named Constants
 
-- **FR-034**: System MUST define the following as named, single-sourced, configurable values, and
-  MUST NOT duplicate their literal values at any point of use or in any test:
+- **FR-034**: System MUST define the following as named, single-sourced values that can be changed
+  in one place without rewriting call sites, and MUST NOT duplicate their literal values at any
+  point of use or in any test:
   `PARKING_SPEED_THRESHOLD` (5 mph), `DRIVING_SPEED_THRESHOLD` (25 mph), `CONVERGENCE_RADIUS`
   (10 meters), `CONVERGENCE_SAMPLE_COUNT` (3), `PARKING_SAMPLE_INTERVAL` (5 seconds),
   `ARRIVAL_CONE_HALF_ANGLE` (45 degrees), `DISTANCE_UNIT_THRESHOLD` (500 feet),

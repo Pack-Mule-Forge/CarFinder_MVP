@@ -3,7 +3,7 @@ package com.packmuleforge.carfinder_mvp.ui
 import com.packmuleforge.carfinder.shared.annotation.Requirement
 import org.junit.Test
 
-@Requirement("FR-023", "FR-027", "SC-004")
+@Requirement("FR-023", "FR-027", "FR-036", "SC-004")
 class GuidanceDisplayConeTest {
     @Test
     fun coneSizeMatchesUncertaintyAndDistance() {

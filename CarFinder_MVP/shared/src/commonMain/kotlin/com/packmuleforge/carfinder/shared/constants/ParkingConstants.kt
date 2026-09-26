@@ -1,7 +1,13 @@
 package com.packmuleforge.carfinder.shared.constants
 
+import com.packmuleforge.carfinder.shared.annotation.Requirement
 import kotlin.math.PI
 
+/**
+ * FR-034: all tunable thresholds named here, single-sourced, rather than inlined as literals.
+ * FR-037: automated tests reference these constants rather than their literal values.
+ */
+@Requirement("FR-034", "FR-037")
 object ParkingConstants {
 
     // ========== Parking State Thresholds (FR-034) ==========

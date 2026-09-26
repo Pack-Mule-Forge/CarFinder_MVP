@@ -269,3 +269,59 @@ task or KSP processor — more robust, disproportionate for MVP.
 | R-05 | Magnetic-to-true-north declination correction, absent from the spec | **Correctness gap — raise in `/speckit-analyze`** |
 | R-07 | Speed smoothing is domain logic and belongs in `:shared` with tests, not in the adapter | Design constraint |
 | R-08 | Play Store background-location justification and review | Release-process risk |
+
+---
+
+## R-10 — `AndroidPermissionController` construction deviation (T110, CR-5)
+
+**Problem found**: `AndroidPermissionController` (androidMain) is constructed once, in
+`CarFinderApplication`, with the Application `Context`. R-06 assumed `request()` could show a
+permission dialog from that construction; it cannot — showing a system permission dialog requires a
+live `Activity` (`ActivityCompat.requestPermissions`/`registerForActivityResult`), which an
+Application-scoped singleton never has. Before this fix, `request()` was a no-op that just re-read
+`status()`, so no permission was ever actually requested at runtime — one of the two causes behind
+CR-5's launch crash (the other being the unconditional service start, T111).
+
+**Decision**: Keep `AndroidPermissionController` a singleton constructed with only a `Context` (no
+change to `CarFinderApplication`'s DI shape), and add a small seam: a `PermissionRequester`
+interface (`shared/src/androidMain/.../platform/PermissionRequester.kt`) with
+`suspend fun requestPermission(permission: String): Boolean` and
+`fun shouldShowRationale(permission: String): Boolean`. `AndroidPermissionController` exposes a
+settable `var requester: PermissionRequester?`. `MainActivity` is the only thing with a live
+Activity, so it implements `PermissionRequester` over its own
+`registerForActivityResult(ActivityResultContracts.RequestPermission())` launcher and assigns
+itself to `requester` in `onCreate()`, before the permission flow runs. When no requester is
+attached (e.g. a call from `ParkingDetectionService`, which never has an Activity), `request()`
+falls back to a status-only read and never throws — preserving the "safe to call with no Activity"
+contract from `contracts/platform-adapters.md`.
+
+**Rationale**: This is the smallest change that fixes the actual defect (no live Activity was ever
+reachable from the controller) without altering `PermissionController`'s public shape in
+`commonMain` — the interface contract in `contracts/platform-adapters.md` is unchanged; only the
+Android-side construction gained a way to be handed a live requester after the fact. It also keeps
+`:shared` free of any Activity Result API dependency (Principle V) — that dependency lives entirely
+in `androidMain` and `:app`.
+
+**Alternatives considered**: Passing an `Activity` into `AndroidPermissionController`'s constructor
+— rejected, because the controller is a long-lived Application-scoped singleton (also read from
+`ParkingDetectionService`) and an `Activity` reference is destroyed/recreated far more often
+(rotation, process recreation), which would leak or go stale. Constructing a brand-new
+`AndroidPermissionController` per-Activity — rejected, because `ParkingDetectionService` needs the
+same controller instance to read `status()` without an Activity at all.
+
+**Follow-up not fixed here**: `PermanentlyDenied` detection depends on
+`shouldShowRequestPermissionRationale`, which itself is only reliable *after* at least one decline;
+this is implemented (`PermissionRequester.shouldShowRationale`) but rationale screens and a
+Settings deep-link for the permanently-denied case remain deferred to production per
+`analysis-findings.md`'s "Deferred to production" list — unchanged by this fix.
+
+**Separately** (not part of this construction fix — a distinct, one-line deviation called out per
+Rule 3 of the T108-T112 work): `Capability` in `commonMain` gained a fourth entry, `NOTIFICATIONS`,
+so FR-045's "and notifications where the platform version requires them" clause can be sequenced
+through the same `PermissionController` abstraction rather than special-cased in `:app`. This is a
+one-line enum addition, a further deviation from `contracts/platform-adapters.md`'s Capability list
+(already out of date per CR-8 — it still shows `FOREGROUND_LOCATION`/`MOTION` instead of the real
+`LOCATION`/`ACTIVITY_RECOGNITION`, unfixed there since CR-8). `commonTest`'s
+`FakePermissionController` needed a matching one-line addition (a default `GRANTED` entry for the
+new capability, for consistency with the other three); no other `commonMain`/`commonTest` change
+was required.

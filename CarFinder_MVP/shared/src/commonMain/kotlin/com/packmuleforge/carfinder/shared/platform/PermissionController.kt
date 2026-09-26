@@ -10,7 +10,14 @@ import kotlinx.coroutines.flow.Flow
 enum class Capability {
     LOCATION,
     BACKGROUND_LOCATION,
-    ACTIVITY_RECOGNITION
+    ACTIVITY_RECOGNITION,
+
+    // T110/CR-5 deviation (see analysis-findings.md): FR-045 requires notifications to be
+    // requested, last and lowest-priority, through this same abstraction. Contracts/platform-
+    // adapters.md's Capability list predates this and was not updated (already flagged in CR-8
+    // as out of date); adding this entry is the smallest change that lets the sequence stay
+    // entirely inside PermissionController rather than special-casing POST_NOTIFICATIONS in :app.
+    NOTIFICATIONS
 }
 
 /**

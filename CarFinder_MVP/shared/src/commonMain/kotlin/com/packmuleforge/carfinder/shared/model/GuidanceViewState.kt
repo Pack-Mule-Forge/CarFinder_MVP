@@ -10,7 +10,8 @@ import com.packmuleforge.carfinder.shared.annotation.Requirement
  *
  * @requirement FR-018 System MUST evaluate the four outcomes in strict priority order
  * @requirement FR-019 System MUST show "Driving - Waiting to Park" when state is DRIVING
- * @requirement FR-020 System MUST show "No parked Location yet." when state is FINDING
+ * @requirement FR-020 System MUST show "Parked location unavailable." when state is FINDING (or
+ *   PARKED without available guidance, FR-030)
  * @requirement FR-021 System MUST show "Sensing you will be Parking Soon." when state is PARKING
  * @requirement FR-022 System MUST show directional guidance when state is PARKED and location exists
  * @requirement FR-030 Any undefined state falls back to FINDING
@@ -24,8 +25,9 @@ sealed interface GuidanceViewState {
     data object Driving : GuidanceViewState
 
     /**
-     * System is FINDING (no location has been determined). Message: "No parked Location yet."
-     * (FR-020). Also the fallback for any undefined state (FR-030).
+     * System is FINDING (no location has been determined), or PARKED with a stored location but
+     * guidance unavailable (FR-030). Message: "Parked location unavailable." (FR-020) — wording
+     * that is true in both cases. Also the fallback for any undefined state.
      */
     data object NoParkedLocation : GuidanceViewState
 

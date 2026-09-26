@@ -7,7 +7,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-@Requirement("FR-015", "FR-016", "FR-037")
+@Requirement("FR-015", "FR-016", "FR-035", "FR-037")
 class UncertaintyCalculatorTest {
     @Test
     fun calculatesUncertaintyAsSum() {

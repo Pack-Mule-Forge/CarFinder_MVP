@@ -13,7 +13,7 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-@Requirement("FR-002", "FR-003", "FR-004", "FR-005", "FR-006", "FR-007", "FR-037")
+@Requirement("FR-002", "FR-003", "FR-004", "FR-005", "FR-006", "FR-007", "FR-035", "FR-037")
 class ParkingStateMachineTest {
     @Test
     fun initialStateIsFinding() = runTest {

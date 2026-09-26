@@ -188,6 +188,36 @@ is not working.
 
 ---
 
+## Scenario 12 — Permission flow on fresh install *(US1; FR-045, FR-046, SC-014)*
+
+Install the app fresh on a device or emulator with no permissions ever granted.
+
+**Expected**:
+
+- On first open, the app requests permissions in order — precise location, then background
+  location, then activity recognition, then notifications (skipping any the platform version does
+  not gate) — one dialog at a time, all while the app is visible.
+- Accepting each prompt: the background parking state machine starts automatically the moment
+  location is granted, with no app restart and no other user action. The default view shows
+  `Driving - Waiting to Park` or `Parked location unavailable.` per the current state, never a
+  crash.
+
+Uninstall and reinstall (or clear app data) for a second pass, this time declining location.
+
+**Expected**:
+
+- The FINDING view (`Parked location unavailable.`) is shown; no guidance is ever presented.
+- The background service never starts — confirm with:
+  ```powershell
+  adb shell dumpsys activity services com.packmuleforge.carfinder_mvp
+  ```
+  `ParkingDetectionService` must not appear.
+- Closing and reopening the app (same install, same session) does not re-prompt for location — it
+  was already declined this session (FR-045).
+- Force-stopping the app and reopening it (a new process, i.e. a new session) asks again (SC-014).
+
+---
+
 ## Known gap to resolve before implementation
 
 [research.md](./research.md) R-05 identifies a correctness gap the spec does not cover: the compass

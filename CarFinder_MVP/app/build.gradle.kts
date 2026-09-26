@@ -51,6 +51,10 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     // ADDED: gives MainActivity the Compose viewModel() function (was an unresolved reference).
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+    // ADDED (T104): non-deprecated androidx.lifecycle.compose.LocalLifecycleOwner, used together
+    // with Lifecycle.repeatOnLifecycle to scope guidance's ephemeral location/heading collection
+    // to STARTED (FR-044).
+    implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.play.services.location)
     implementation(libs.androidx.datastore.proto)

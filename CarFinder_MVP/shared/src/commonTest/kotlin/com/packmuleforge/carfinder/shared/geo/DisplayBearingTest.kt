@@ -5,7 +5,7 @@ import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
-@Requirement("FR-024", "FR-037")
+@Requirement("FR-024", "FR-035", "FR-037")
 class DisplayBearingTest {
     @Test
     fun displayBearingFormula() {

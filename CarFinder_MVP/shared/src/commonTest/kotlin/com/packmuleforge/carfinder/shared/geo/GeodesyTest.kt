@@ -6,7 +6,7 @@ import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
-@Requirement("FR-023", "FR-024", "FR-028", "FR-037")
+@Requirement("FR-023", "FR-024", "FR-028", "FR-035", "FR-037")
 class GeodesyTest {
     @Test
     fun distanceMetersReturnZeroBetweenIdenticalPoints() {
