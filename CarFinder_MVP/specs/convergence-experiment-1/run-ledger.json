@@ -98,12 +98,38 @@
       "origin": "Novel",
       "checklist_ref": null,
       "severity": "MEDIUM",
-      "description": "research.md (002, decision R12) flags that the spec gives no formula for the accuracy radius of the stored centroid, and chooses the most cautious option: a circle around the centroid large enough to contain every reading's own accuracy circle. The shipped ConvergenceWindow.centroid() instead uses the simple mean of the 3 samples' own accuracy radii. Claude Code itself flagged this as an open item for /speckit.analyze to confirm -- logged here so the real shipped formula is on record for that decision, not to force it now. NOT YET DECIDED as of this entry.",
+      "description": "research.md (002, decision R12) flags that the spec gives no formula for the accuracy radius of the stored centroid, and chooses the most cautious option: a circle around the centroid large enough to contain every reading's own accuracy circle. The shipped ConvergenceWindow.centroid() instead uses the simple mean of the 3 samples' own accuracy radii. Claude Code itself flagged this as an open item for /speckit.analyze to confirm -- logged here so the real shipped formula is on record for that decision, not to force it now. NOT YET DECIDED as of this entry. UPDATE (post-/speckit.analyze, U1 fix): now a precise formula in FR-012 -- radius = max over the 3 readings of (that reading's own accuracy + its distance from the centroid), guaranteeing the stored circle contains every reading's own accuracy circle. Still diverges from the shipped simple-average formula, by design -- this is the 'let it run, observe' item from the Gary/Claude agreement of 2026-09-30, not a gap needing correction.",
       "req_ref": "FR-007",
       "hitl_category": "none",
       "artifact_layer_target": "plan",
       "verified_by": "Cross-checked against shipped ConvergenceWindow.kt by Claude, 2026-09-30",
-      "status": "Open"
+      "status": "Resolved-diverged (by agreement)"
+    },
+    {
+      "id": "RR1-007",
+      "origin": "Recurrence-of-CR-6",
+      "checklist_ref": [
+        "RR1-CHK-16"
+      ],
+      "severity": "HIGH",
+      "description": "speckit.analyze (002) independently caught the same category of gap as the original CR-6: platform adapters/production classes with no seam for test fakes, violating Principle III (Platform Adapters Tested via Fakes). Significant: CR-6's harder half -- the actual architectural fix, not just the tasks-vs-code drift part -- was explicitly left unresolved in the original ('a production-code change this session's rules explicitly forbid making to satisfy a test -- reported to owner 2026-09-24, not fixed'), and stalled the original implementation session with a compile error. The 002 plan fixed this proactively, before any implementation code was written: a new :shared-testing module holds the fakes, CarFinderApplication.createAdapters() is overridable, and a TestCarFinderApplication swaps in fakes for :app tests. This is a genuine improvement over the original process, not just a match -- caught by the analyze gate at plan time instead of as a mid-implementation blocker.",
+      "req_ref": "Constitution Principle III",
+      "hitl_category": "Architecture conflict",
+      "artifact_layer_target": "constitution",
+      "verified_by": "Cross-checked against original analysis-findings.md CR-6 entry by Claude, 2026-09-30",
+      "status": "Prevented (improved on original)"
+    },
+    {
+      "id": "RR1-008",
+      "origin": "Novel",
+      "checklist_ref": null,
+      "severity": "LOW",
+      "description": "speckit.analyze (002, finding U2) added an explicit HEADING_STALENESS_TIMEOUT_MILLIS named constant (2s) defining when a non-null compass heading still counts as unavailable. The shipped GuidanceViewStateCalculator only null-checks deviceHeading, with no staleness/age handling for heading specifically (unlike the fix, which does have FIX_STALENESS_TIMEOUT_MILLIS). This looks like a genuine robustness improvement over the shipped code, not a correctness fix for a defect -- letting it stand, consistent with the Gary/Claude agreement to let neutral/improving technical choices run unsteered during this collection pass.",
+      "req_ref": "FR-030 / FR-031",
+      "hitl_category": "none",
+      "artifact_layer_target": "plan",
+      "verified_by": "Cross-checked against shipped GuidanceViewStateCalculator.kt by Claude, 2026-09-30",
+      "status": "Observed, not steered"
     }
   ]
 }
