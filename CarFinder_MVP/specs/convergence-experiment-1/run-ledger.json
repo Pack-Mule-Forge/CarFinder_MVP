@@ -130,6 +130,18 @@
       "artifact_layer_target": "plan",
       "verified_by": "Cross-checked against shipped GuidanceViewStateCalculator.kt by Claude, 2026-09-30",
       "status": "Observed, not steered"
+    },
+    {
+      "id": "RR1-009",
+      "origin": "Novel",
+      "checklist_ref": null,
+      "severity": "HIGH",
+      "description": "speckit.analyze (002, finding F1) caught a genuine self-contradiction in the fresh spec: FR-033 claimed unconditional restart-after-reboot, while an edge case (added during the U3 fix) said foreground-only location permission would prevent that. Claude Code's research (citing developer.android.com's foreground-service background-start-restriction page) correctly distinguished two separate Android mechanisms: boot IS exempted from the general background-service-launch restriction, but camera/location/microphone-typed foreground services carry a SEPARATE while-in-use permission check that boot is NOT exempted from, meaning a location-type foreground service started from BOOT_COMPLETED with only foreground permission granted likely throws SecurityException on API 34+. Claude initially pushed back with an incomplete reading of the platform restrictions (conflating the two mechanisms) and was corrected by Claude Code's more careful, well-cited research -- a case of the fresh-run agent being right and the reviewing agent being wrong, caught because Claude Code held its ground with evidence rather than deferring. Resolved via Option 1: FR-033 now states the honest degraded behavior under foreground-only permission (detection runs while the service is alive, resumes on next app open, notification nudges toward 'Allow all the time'), pending quickstart V6 (real device, API 34+, reboot while PARKED with foreground-only permission) to confirm either way. NOTABLE: the shipped 001 app's ServiceBootReceiver checks only ACCESS_FINE_LOCATION before attempting restart, not background location -- if this reading of the platform restriction holds, the shipped, 'real-world-tested' app may carry the same latent, never-actually-exercised bug. Gary plans to run V6 on both builds.",
+      "req_ref": "FR-033 (002) / FR-046 (001)",
+      "hitl_category": "Requirement conflict",
+      "artifact_layer_target": "spec",
+      "verified_by": "Claude Code's cited research (developer.android.com); pending Gary's V6 device test on both builds, 2026-09-30",
+      "status": "Resolved honestly, pending device confirmation (V6)"
     }
   ]
 }
