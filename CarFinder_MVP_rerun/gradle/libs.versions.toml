@@ -1,0 +1,74 @@
+[versions]
+agp = "9.3.3"
+coreKtx = "1.19.0"
+junit = "4.13.2"
+junitVersion = "1.3.0"
+espressoCore = "3.7.0"
+lifecycleRuntimeKtx = "2.6.1"
+activityCompose = "1.8.0"
+# ADDED: androidx.activity (activity-compose) and androidx.fragment interact internally for
+# the Activity Result API (registerForActivityResult). AGP lint flags
+# InvalidFragmentVersionForActivityResult if the resolved androidx.fragment version is below
+# 1.3.0 -- nothing in this project declared fragment explicitly, so a transitive dependency
+# (most likely play-services-location -> play-services-base) was resolving it too low.
+# 1.9.1 is current stable as of 2026-09-23. Reference: https://developer.android.com/jetpack/androidx/releases/fragment
+fragment = "1.9.1"
+kotlin = "2.2.10"
+composeBom = "2026.02.01"
+kotlinxCoroutines = "1.7.3"
+playServicesLocation = "21.1.0"
+datastoreVersion = "1.0.0"
+
+[libraries]
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
+androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
+# ADDED: provides viewModel() for Compose (androidx.lifecycle.viewmodel.compose.viewModel), used by MainActivity.
+# Same version as lifecycle-runtime-ktx so the lifecycle libraries stay in step.
+# Reference: https://developer.android.com/jetpack/androidx/releases/lifecycle
+androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycleRuntimeKtx" }
+# ADDED (T104): provides repeatOnLifecycle/collectAsStateWithLifecycle so guidance's ephemeral
+# location/heading collection can be scoped to STARTED (FR-044) from the Composable.
+# Same version as lifecycle-runtime-ktx so the lifecycle libraries stay in step.
+androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycleRuntimeKtx" }
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+# ADDED: forces androidx.fragment to a version >= 1.3.0 (see the `fragment` version comment above) --
+# fixes the fatal InvalidFragmentVersionForActivityResult lint error found 2026-09-29.
+androidx-fragment-ktx = { group = "androidx.fragment", name = "fragment-ktx", version.ref = "fragment" }
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }
+androidx-compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
+androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
+kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
+# ADDED: provides runTest { } for testing coroutine code. Same version as kotlinx-coroutines-core
+# so the two never drift apart. Reference: https://github.com/Kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-test
+# ADDED: the JUnit4 flavour of kotlin-test. The plain kotlin-test artifact is "multiplatform" and did not
+# put kotlin.test.Test on the Android unit-test classpath; this variant maps it onto JUnit4.
+# Reference: https://kotlinlang.org/api/latest/kotlin.test/
+kotlin-test-junit = { group = "org.jetbrains.kotlin", name = "kotlin-test-junit", version.ref = "kotlin" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
+kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "kotlin" }
+play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
+androidx-datastore-proto = { group = "androidx.datastore", name = "datastore", version.ref = "datastoreVersion" }
+protobuf-kotlin = { group = "com.google.protobuf", name = "protobuf-kotlin", version = "3.24.4" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+# NEW (AGP 9): replaces "com.android.library" for Kotlin Multiplatform modules.
+# version.ref = "agp" means "use the same version as AGP", so the two never drift apart.
+android-kotlin-multiplatform-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
+# CHANGED 0.9.5 -> 0.10.0: versions 0.9.5 and 0.9.6 fail with AGP 9 ("Cannot cast ... to BaseExtension").
+# 0.10.0 is the first release that supports AGP 9. NOTE: this is the Gradle PLUGIN version;
+# it is unrelated to the protoc compiler version (3.24.4) set in app/build.gradle.kts.
+# Known issue: https://github.com/google/protobuf-gradle-plugin/issues/787
+# Release notes: https://github.com/google/protobuf-gradle-plugin/releases
+protobuf = { id = "com.google.protobuf", version = "0.10.0" }
+

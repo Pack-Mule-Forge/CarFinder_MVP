@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package com.packmuleforge.carfinder_mvp;
+
+option java_package = "com.packmuleforge.carfinder_mvp.data";
+option java_outer_classname = "ParkingDataProto";
+
+message ParkingData {
+  enum State {
+    DRIVING = 0;
+    PARKING = 1;
+    PARKED = 2;
+    FINDING = 3;
+  }
+
+  message GeoPoint {
+    double latitude_degrees = 1;
+    double longitude_degrees = 2;
+    double accuracy_radius_meters = 3;
+  }
+
+  message ParkedLocationData {
+    GeoPoint point = 1;
+    int64 captured_at_epoch_millis = 2;
+  }
+
+  State state = 1;
+  optional ParkedLocationData parked_location = 2;
+}
