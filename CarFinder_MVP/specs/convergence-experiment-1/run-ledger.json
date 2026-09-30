@@ -1,0 +1,109 @@
+{
+  "_meta": {
+    "purpose": "New findings from the fresh Spec-Kit re-run, logged as they occur. Origin: Recurrence of a checklist item, or Novel.",
+    "fields": [
+      "id",
+      "origin",
+      "checklist_ref",
+      "severity",
+      "description",
+      "req_ref",
+      "hitl_category",
+      "artifact_layer_target",
+      "verified_by",
+      "status"
+    ],
+    "hitl_categories": [
+      "Use Case conflict",
+      "Requirement conflict",
+      "Architecture conflict",
+      "Feature creep",
+      "none"
+    ],
+    "artifact_layers": [
+      "spec",
+      "constitution",
+      "plan"
+    ],
+    "id_prefix": "RR1-"
+  },
+  "entries": [
+    {
+      "id": "RR1-001",
+      "origin": "Recurrence-of-R1-I1",
+      "checklist_ref": [
+        "RR1-CHK-01",
+        "RR1-CHK-09"
+      ],
+      "severity": "CRITICAL",
+      "description": "002 /speckit.clarify independently re-hit the same ambiguity as the original R1-I1: what FINDING means (no location ever held, vs. a real post-PARKED 'actively searching' state). Left to its own defaults, the fresh pass was heading toward the latter reading (its clarify Q1 premise assumed a PARKED->FINDING transition exists). Steered back to the validated definition (FINDING = no Parked Location held; PARKED covers the walk-back and guidance display; no PARKED->FINDING edge) before it was written into spec.md.",
+      "req_ref": "FR-009",
+      "hitl_category": "Requirement conflict",
+      "artifact_layer_target": "spec",
+      "verified_by": "Cross-checked against shipped ParkingState.kt / ParkingStateMachine.kt by Claude; confirmed by Gary, 2026-09-30",
+      "status": "Prevented"
+    },
+    {
+      "id": "RR1-002",
+      "origin": "Recurrence-of-R1-A1",
+      "checklist_ref": [
+        "RR1-CHK-07"
+      ],
+      "severity": "HIGH",
+      "description": "002 /speckit.clarify independently re-hit the same convergence-definition ambiguity as the original R1-A1 (all-pairwise vs. centroid-based 'within 10m'). This time Claude Code's own recommended answer (centroid-based, the looser criterion, cluster up to 20m wide) would have been an actual regression from the validated, shipped all-pairwise criterion, not just a fresh judgment call. Corrected to all-pairwise (matching FR-006's worked example and ConvergenceWindow.isConverged()) before it was written into spec.md.",
+      "req_ref": "FR-007",
+      "hitl_category": "Requirement conflict",
+      "artifact_layer_target": "spec",
+      "verified_by": "Cross-checked against shipped ConvergenceWindow.kt by Claude; confirmed by Gary, 2026-09-30",
+      "status": "Prevented"
+    },
+    {
+      "id": "RR1-003",
+      "origin": "Novel",
+      "checklist_ref": null,
+      "severity": "HIGH",
+      "description": "002 /speckit.clarify surfaced a genuinely new ambiguity not on the original checklist: whether background parking detection should run continuously (always-on foreground service) or be motion-triggered (wake on driving, no sampling while PARKED/FINDING). Claude Code recommended the motion-triggered design; this would have been a real architecture regression against FR-014's existing continuous-background guarantee and the shipped ParkingDetectionService, which starts once on permission grant and runs through every state. Corrected to always-on before it was written into spec.md (now FR-033).",
+      "req_ref": "FR-014 / FR-033",
+      "hitl_category": "Architecture conflict",
+      "artifact_layer_target": "spec",
+      "verified_by": "Cross-checked against shipped ParkingDetectionService.kt by Claude; confirmed by Gary, 2026-09-30",
+      "status": "Prevented"
+    },
+    {
+      "id": "RR1-004",
+      "origin": "Novel",
+      "checklist_ref": null,
+      "severity": "MEDIUM",
+      "description": "002 /speckit.clarify asked what the guidance display should show on PARKED with a stale fix or missing heading. Claude Code recommended keeping the last-known cone/distance on screen, dimmed/marked stale. The shipped design (and the original ledger's stated philosophy -- 'incomplete, not incorrect') instead falls back to the same generic no-guidance message used for 'no location ever', for both fix-loss and heading-loss alike (GuidanceViewStateCalculator falls through to NoParkedLocation). Thematically related to R1-I1 (same underlying 'what does the no-guidance state look like' question, one layer down in the UI) but a distinct requirement, so logged separately rather than as a literal recurrence. Corrected before being written into spec.md.",
+      "req_ref": "FR-030",
+      "hitl_category": "Requirement conflict",
+      "artifact_layer_target": "spec",
+      "verified_by": "Cross-checked against shipped GuidanceViewStateCalculator.kt by Claude; confirmed by Gary, 2026-09-30",
+      "status": "Prevented"
+    },
+    {
+      "id": "RR1-005",
+      "origin": "Novel",
+      "checklist_ref": null,
+      "severity": "MEDIUM",
+      "description": "plan.md (002) chose Jetpack DataStore with plain JSON for the persisted parking record, and proposes removing the protobuf plugin/library as unused. The shipped implementation uses Proto DataStore instead, with a defined parking_data.proto schema (ParkingDataSerializer, ParkingDataProto). Both satisfy the same functional requirements (FR-011 persistence, corrupted-file-falls-back-to-FINDING per FR-018/FR-030) -- this is a legitimate alternate technical choice, not a correctness defect -- but it was decided without being flagged as an open decision the way the centroid-accuracy question (R12) was. Surfaced to the owner (Gary) before /speckit.tasks, to be picked deliberately rather than silently baked in. NOT YET DECIDED as of this entry.",
+      "req_ref": "FR-011",
+      "hitl_category": "Architecture conflict",
+      "artifact_layer_target": "plan",
+      "verified_by": "Cross-checked against shipped DataStoreParkedLocationRepository.kt and parking_data.proto by Claude, 2026-09-30",
+      "status": "Open"
+    },
+    {
+      "id": "RR1-006",
+      "origin": "Novel",
+      "checklist_ref": null,
+      "severity": "MEDIUM",
+      "description": "research.md (002, decision R12) flags that the spec gives no formula for the accuracy radius of the stored centroid, and chooses the most cautious option: a circle around the centroid large enough to contain every reading's own accuracy circle. The shipped ConvergenceWindow.centroid() instead uses the simple mean of the 3 samples' own accuracy radii. Claude Code itself flagged this as an open item for /speckit.analyze to confirm -- logged here so the real shipped formula is on record for that decision, not to force it now. NOT YET DECIDED as of this entry.",
+      "req_ref": "FR-007",
+      "hitl_category": "none",
+      "artifact_layer_target": "plan",
+      "verified_by": "Cross-checked against shipped ConvergenceWindow.kt by Claude, 2026-09-30",
+      "status": "Open"
+    }
+  ]
+}
