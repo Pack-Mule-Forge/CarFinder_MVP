@@ -43,6 +43,10 @@ dependencies {
     implementation(project(":shared"))
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
+    // ADDED: fixes fatal lint error InvalidFragmentVersionForActivityResult (2026-09-29) --
+    // registerForActivityResult (ActivityPermissionRequester) needs androidx.fragment >= 1.3.0,
+    // and nothing else in the graph was pinning it that high. See gradle/libs.versions.toml.
+    implementation(libs.androidx.fragment.ktx)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
