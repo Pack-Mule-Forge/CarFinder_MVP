@@ -881,8 +881,10 @@ slow readings and assert that PARKED is kept.
   - It runs on a connected device with `.\gradlew.bat :benchmark:connectedBenchmarkAndroidTest`. It is
     automated, but not part of CI at MVP (Constitution II).
 - [ ] T101 Review every Composable in `AM/ui/` and `AM/MainActivity.kt` for local `remember { mutableStateOf }`
-  holding domain data, and for any Composable that collects flows or runs side effects (Constitution IV).
-  Portability of `SC/` is enforced automatically by `CommonMainPortabilityScanTest`. Review test files for hard-coded `3` used as a window or sample count
+  holding domain data, and for any Composable that collects flows or runs side effects (Constitution IV). The
+  Activity-held `uiState` in `MainActivity` (T076) is the approved hoisting boundary and is exempt: it only
+  mirrors `presenter.state` and is never computed there. Portability of `SC/` is enforced automatically by
+  `CommonMainPortabilityScanTest`. Review test files for hard-coded `3` used as a window or sample count
   (QR-002; T012 cannot catch this). Fix any finding at its source.
 - [ ] T102 Run the full suite: `.\gradlew.bat :shared:allTests :app:testDebugUnitTest :app:lintDebug` and
   `Invoke-Pester tools\traceability\tests`. Everything must be green, and lint must report no errors.

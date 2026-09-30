@@ -63,6 +63,10 @@ table-backed store behind its own interface.
 - `:app` `test`: Robolectric plus `compose-ui-test-junit4`. These are the semantics-based Compose UI tests.
   They run on the JVM and do not need an emulator.
 - `tools/traceability`: Pester tests against fixture source trees.
+- `:shared-testing`: a test-only KMP module that holds the fakes, used by `:shared` `commonTest` and `:app`
+  tests. It exists because test source sets are not visible across modules.
+- `:benchmark`: a Macrobenchmark module with a frame-timing test for FR-027. It runs on a connected reference
+  device and is automated, but outside the fast test loop and outside CI at MVP.
 - Every test carries `@requirement <ID>` in KDoc (see [contracts/traceability.md](contracts/traceability.md)).
 
 **Target Platform**: Android phones. minSdk 26, and targetSdk/compileSdk set to the latest stable API level that

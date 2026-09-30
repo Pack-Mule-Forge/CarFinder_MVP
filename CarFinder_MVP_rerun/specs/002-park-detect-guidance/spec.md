@@ -319,7 +319,7 @@ becomes DRIVING and no Parked Location remains stored, including after an app re
 - **FR-026**: Distance MUST be shown in feet when it is at or below the distance-unit threshold
   (500 ft) and in miles when above it.
 - **FR-027**: The guidance display MUST reflect each location and heading update in the next
-  rendered frame. A guidance update MUST NOT recompose anything outside the guidance display. During
+  rendered frame. A guidance update MUST NOT redraw anything outside the guidance display. During
   a 60-second guidance session with heading updates at the sensor's UI rate, at least 95% of frames
   MUST render within the display's frame budget (16.7 ms at 60 Hz) on the reference test device
   (see Assumptions).
