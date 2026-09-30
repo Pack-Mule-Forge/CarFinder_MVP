@@ -19,6 +19,8 @@ ID := (FR|QR)-\d{3}
 - **Classification by path**:
   - A file under `src/test/`, `src/androidTest/`, or any `src/<name>Test/` (`commonTest`, `androidHostTest` and
     so on) is a **test** file.
+  - Files in the `benchmark/` module and `tools/benchmark/` (the FR-027 frame-timing benchmark and its assertion
+    script) are also **test** files.
   - Any other file is an **implementation** file.
   - `tools/traceability/tests/fixtures/` is excluded by default.
 - Test names may also embed the ID, for example `fun fr007_threeReadings9mApartInLine_doNotConverge()`. The KDoc

@@ -248,8 +248,11 @@ plus an honest `RequestMode` stops iOS motion from pretending to have an explici
 - For each input it runs the pure `ParkingStateMachine.reduce(snapshot, event)`, persists the record when the
   lifecycle or location changed, and updates `StateFlow<EngineState>` and the requested `SamplingProfile`.
 - It persists **before** publishing, so the UI never shows a PARKED state that has not been saved.
-- One engine instance per process is held by `CarFinderApplication`. The service starts the engine, and the
-  Activity observes it.
+- One engine instance per process is held by `CarFinderApplication`, and the Activity and the service resolve to
+  that same instance (verified by `EngineSingletonTest`). Only the service starts the engine; the Activity is a
+  read-only observer that calls `restore()` to show the persisted state and never starts sampling, subscriptions
+  or the actor (verified by `MainActivityReadOnlyObserverTest` and `EngineStartOwnershipScanTest`). An early
+  implementation had the Activity call `start()`; it was corrected during implementation (ledger RR1-010).
 - On process start, `Restore` loads the record. If the record says PARKED but has no location, the engine falls
   back to FINDING and rewrites the record (FR-018). The speed filter and convergence window always start empty
   after a restore.
@@ -312,8 +315,9 @@ cheap. A monotonic clock makes FR-034 immune to wall-clock changes.
   the minimum display dimension. The Composable multiplies by `min(maxWidth, maxHeight)` and translates to the
   center. That transform is the only arithmetic in the UI.
 - The pivot is the screen center. The cone runs from the apex (person) at `-L/2` to the far end (car) at `+L/2`
-  along `display_bearing`. `L` is `TuningConstants.CONE_LENGTH_FRACTION` = 0.8, so the drawing always fits in a
-  circle inscribed in the minimum dimension. That gives identical proportions in portrait and landscape
+  along `display_bearing`. `L` is `TuningConstants.CONE_LENGTH_FRACTION` = 0.65. The sector's farthest point from center is
+  `sqrt(1.25 - cos(halfAngle)) x L`, about 0.737L at the 45° arrival angle, so L must be at most 0.678 for the drawing
+  to fit in the minimum-dimension square. (Changed from 0.8 during implementation, when a test showed 0.8 clips wide cones.) That gives identical proportions in portrait and landscape
   (FR-024). The distance text sits unrotated at the center. No centerline is drawn (FR-023).
 - **UI tests** run as Robolectric host tests with `createComposeRule()`:
   - Custom `SemanticsPropertyKey`s (`ConeHalfAngleDegrees`, `ConeDisplayBearingDegrees`) and test tags expose

@@ -1,270 +1,196 @@
 #Requires -Version 5.1
+# @requirement QR-005, QR-006, QR-007
 
 <#
 .SYNOPSIS
-Generates a traceability report mapping requirements to implementation and test coverage.
+Generates the forward-traceability report required by Constitution Principle II.
 
 .DESCRIPTION
-Scans Kotlin source files for @Requirement annotations and KDoc @requirement tags,
-maps them to requirements in spec.md, and generates a report showing fully traced,
-unimplemented, untested, and orphaned requirements.
+Reads requirement IDs (**FR-###** and **QR-###** definition markers) from the spec, scans Kotlin sources for
+KDoc "@requirement <ID>[, <ID>]*" tags and tool scripts for "# @requirement" comments, classifies each tag as
+implementation or test by its path, and writes a markdown report listing, per requirement, the implementing
+file:declaration entries, the verifying file:test entries, untraced requirements and orphaned tags.
+
+Grammar and report format: specs/002-park-detect-guidance/contracts/traceability.md
 
 .PARAMETER SpecPath
-Path to the authoritative spec.md file containing requirement IDs (FR-###).
-Default: specs/001-park-detect-guidance/spec.md
+Spec file holding the requirement definitions.
 
 .PARAMETER SourcePaths
-Paths to scan for Kotlin source files containing annotations.
-Default: @('shared/src', 'app/src')
+Directories scanned recursively for *.kt files.
+
+.PARAMETER ToolPaths
+Directories scanned (non-recursively) for *.ps1 files carrying "# @requirement" comments.
+
+.PARAMETER ExcludePaths
+Path prefixes (relative to the current directory) that are never scanned.
 
 .PARAMETER OutputPath
-Path where the generated report markdown will be written.
-Default: specs/001-park-detect-guidance/traceability.md
+Where the generated markdown report is written.
 
 .PARAMETER FailOnGaps
-If set, exit with non-zero status if any gaps are found (unimplemented, untested, orphaned).
-Default: $false
+Exit with code 1 when any requirement is UNTESTED or UNTRACED, or any tag is orphaned.
 
 .EXAMPLE
-Get-TraceabilityReport.ps1 -FailOnGaps
+.\tools\traceability\Get-TraceabilityReport.ps1 -FailOnGaps
 #>
 
 param(
-    [string]$SpecPath = "specs/001-park-detect-guidance/spec.md",
-    [string[]]$SourcePaths = @("shared/src", "app/src"),
-    [string]$OutputPath = "specs/001-park-detect-guidance/traceability.md",
+    [string]$SpecPath = "specs/002-park-detect-guidance/spec.md",
+    [string[]]$SourcePaths = @("shared/src", "shared-testing/src", "app/src", "benchmark/src"),
+    [string[]]$ToolPaths = @("tools/traceability", "tools/traceability/tests", "tools/benchmark"),
+    [string[]]$ExcludePaths = @("tools/traceability/tests/fixtures"),
+    [string]$OutputPath = "specs/002-park-detect-guidance/traceability.md",
     [switch]$FailOnGaps
 )
 
-# ============================================================================
-# Helper functions
-# ============================================================================
+$ErrorActionPreference = "Stop"
 
-function Get-RequirementIDsFromSpec {
-    param([string]$Path)
+# Non-ASCII report glyphs are built from code points: PowerShell 5.1 reads BOM-less scripts as ANSI.
+$EmDash = [string][char]0x2014
+$MidDot = [string][char]0x00B7
+$Arrow = [string][char]0x2192
 
-    if (-not (Test-Path $Path)) {
-        Write-Error "Spec file not found: $Path"
-        exit 1
-    }
+$IdPattern = '(?:FR|QR)-\d{3}'
+$TagPattern = "@requirement\s+($IdPattern(?:\s*,\s*$IdPattern)*)"
+$DeclarationPattern = '\b(?:fun|class|object|interface|val|var)\s+(?:<[^>]+>\s*)?(?:[\w.]+\.)?([A-Za-z_]\w*)'
 
-    $content = Get-Content $Path -Raw
-    $ids = @()
-
-    # Match **FR-###** anywhere in the line (spec.md writes "- **FR-001**: ...", with a
-    # leading list marker, so an anchor at the start of the line never matched -- CR/T083 fix).
-    $pattern = '\*\*FR-(\d+a?)\*\*'
-    $content -split "`n" | ForEach-Object {
-        if ($_ -match $pattern) {
-            $ids += "FR-$($matches[1])"
-        }
-    }
-
-    return $ids | Sort-Object -Unique
+function ConvertTo-RelativePath {
+    param([string]$FullPath)
+    $relative = Resolve-Path -LiteralPath $FullPath -Relative
+    return ($relative -replace '^\.[\\/]', '') -replace '\\', '/'
 }
 
-function Get-TestSourceSets {
-    return @('commonTest', 'androidTest', 'androidHostTest', 'androidDeviceTest', 'src/test', 'src/androidTest')
-}
-
-function IsTestFile {
-    param([string]$FilePath)
-
-    $testSets = Get-TestSourceSets
-    foreach ($testSet in $testSets) {
-        if ($FilePath -like "*/$testSet/*") {
-            return $true
-        }
+function Test-IsExcluded {
+    param([string]$RelativePath)
+    foreach ($prefix in $ExcludePaths) {
+        $normalized = ($prefix -replace '\\', '/').TrimEnd('/')
+        if ($RelativePath -eq $normalized -or $RelativePath.StartsWith("$normalized/")) { return $true }
     }
     return $false
 }
 
-function Get-AnnotationsFromFile {
-    param([string]$FilePath)
-
-    $content = Get-Content $FilePath -Raw
-    $ids = @()
-
-    # Match @Requirement("FR-001", "FR-002", ...)
-    if ($content -match '@Requirement\((.*?)\)') {
-        $args = $matches[1]
-        $pattern = '"(FR-\d+a?)"'
-        [regex]::Matches($args, $pattern) | ForEach-Object {
-            $ids += $_.Groups[1].Value
-        }
-    }
-
-    # Match /** @requirement FR-### */
-    $pattern = '@requirement\s+(FR-\d+a?)'
-    [regex]::Matches($content, $pattern) | ForEach-Object {
-        $ids += $_.Groups[1].Value
-    }
-
-    return $ids | Sort-Object -Unique
+function Test-IsTestPath {
+    param([string]$RelativePath)
+    # src/test/, src/androidTest/, any src/<name>Test/ source set (commonTest, androidHostTest, ...), the tool's own
+    # tests/ directory (Pester tests for this script), and the benchmark module and its assertion script.
+    return ($RelativePath -match '(^|/)src/(test|[A-Za-z]*Test)/') -or ($RelativePath -match '(^|/)tests/') -or
+        ($RelativePath -match '^(benchmark|tools/benchmark)/')
 }
 
-function Get-LineNumbers {
-    param([string]$FilePath, [string[]]$RequirementIDs)
+function Get-SpecRequirementIds {
+    param([string]$Path)
+    if (-not (Test-Path -LiteralPath $Path)) { throw "Spec file not found: $Path" }
+    $text = Get-Content -LiteralPath $Path -Raw
+    return [regex]::Matches($text, "\*\*($IdPattern)\*\*") | ForEach-Object { $_.Groups[1].Value } |
+        Sort-Object -Unique
+}
 
-    $lines = @{}
-    $content = Get-Content $FilePath
+function Get-DeclarationName {
+    param([string[]]$Lines, [int]$StartIndex)
+    for ($i = $StartIndex; $i -lt [Math]::Min($Lines.Count, $StartIndex + 40); $i++) {
+        $line = $Lines[$i].Trim()
+        if ($line.StartsWith('*') -or $line.StartsWith('/*') -or $line.StartsWith('//') -or $line.StartsWith('@')) {
+            if ($line -notmatch '^@\w+\s+(fun|class|object|val|var)\b') { continue }
+        }
+        if ($line -match $DeclarationPattern) { return $Matches[1] }
+    }
+    return $null
+}
 
-    foreach ($id in $RequirementIDs) {
-        for ($i = 0; $i -lt $content.Count; $i++) {
-            if ($content[$i] -like "*$id*") {
-                if (-not $lines[$id]) {
-                    $lines[$id] = @()
-                }
-                $lines[$id] += ($i + 1)
+function Get-TagsFromFile {
+    param([System.IO.FileInfo]$File, [string]$RelativePath)
+    $lines = @(Get-Content -LiteralPath $File.FullName)
+    $tags = @()
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        $match = [regex]::Match($lines[$i], $TagPattern)
+        if (-not $match.Success) { continue }
+        $declaration = if ($File.Extension -eq '.kt') { Get-DeclarationName $lines ($i + 1) } else { $File.BaseName }
+        foreach ($id in ([regex]::Matches($match.Groups[1].Value, $IdPattern) | ForEach-Object { $_.Value })) {
+            $tags += [pscustomobject]@{
+                Id          = $id
+                Path        = $RelativePath
+                Line        = $i + 1
+                Declaration = $declaration
+                IsTest      = Test-IsTestPath $RelativePath
             }
         }
     }
-
-    return $lines
+    return $tags
 }
 
-# ============================================================================
-# Main script
-# ============================================================================
+# ----------------------------------------------------------------------------------------------------------------
 
-# Get all requirement IDs from spec
-$specIds = Get-RequirementIDsFromSpec $SpecPath
-Write-Verbose "Found $($specIds.Count) requirements in spec"
+$specIds = @(Get-SpecRequirementIds $SpecPath)
 
-# Scan source files for annotations
-$implementations = @{}
-$verifyingTests = @{}
-$orphans = @()
-
-foreach ($sourcePath in $SourcePaths) {
-    if (-not (Test-Path $sourcePath)) {
-        Write-Verbose "Source path not found: $sourcePath"
-        continue
-    }
-
-    $files = Get-ChildItem -Path $sourcePath -Filter "*.kt" -Recurse
-
-    foreach ($file in $files) {
-        $ids = Get-AnnotationsFromFile $file.FullName
-        $isTest = IsTestFile $file.FullName
-        $relativePath = Resolve-Path -Relative $file.FullName
-
-        foreach ($id in $ids) {
-            # Check for orphaned annotations
-            if ($id -notin $specIds) {
-                $orphans += @{ Id = $id; Path = $relativePath }
-                continue
-            }
-
-            if ($isTest) {
-                if (-not $verifyingTests[$id]) {
-                    $verifyingTests[$id] = @()
-                }
-                $lines = Get-LineNumbers $file.FullName @($id)
-                $fileRef = "$relativePath"
-                if ($lines[$id]) {
-                    $fileRef += ":" + ($lines[$id] -join ", :")
-                }
-                $verifyingTests[$id] += $fileRef
-            } else {
-                if (-not $implementations[$id]) {
-                    $implementations[$id] = @()
-                }
-                $lines = Get-LineNumbers $file.FullName @($id)
-                $fileRef = "$relativePath"
-                if ($lines[$id]) {
-                    $fileRef += ":" + ($lines[$id] -join ", :")
-                }
-                $implementations[$id] += $fileRef
-            }
-        }
-    }
+$files = @()
+foreach ($path in $SourcePaths) {
+    if (Test-Path -LiteralPath $path) { $files += Get-ChildItem -LiteralPath $path -Filter "*.kt" -Recurse -File }
+}
+foreach ($path in $ToolPaths) {
+    if (Test-Path -LiteralPath $path) { $files += Get-ChildItem -LiteralPath $path -Filter "*.ps1" -File }
 }
 
-# Categorize requirements
-$fullyTraced = @()
-$implementedButUntested = @()
-$specifiedButUnimplemented = @()
-
-foreach ($id in $specIds) {
-    $hasImpl = $id -in $implementations.Keys
-    $hasTest = $id -in $verifyingTests.Keys
-
-    if ($hasImpl -and $hasTest) {
-        $fullyTraced += $id
-    } elseif ($hasImpl -and -not $hasTest) {
-        $implementedButUntested += $id
-    } elseif (-not $hasImpl) {
-        $specifiedButUnimplemented += $id
-    }
+$tags = @()
+foreach ($file in $files) {
+    $relative = ConvertTo-RelativePath $file.FullName
+    if (Test-IsExcluded $relative) { continue }
+    $tags += Get-TagsFromFile $file $relative
 }
 
-# Generate report
+$orphans = @($tags | Where-Object { $_.Id -notin $specIds })
+$rows = foreach ($id in $specIds) {
+    $idTags = @($tags | Where-Object { $_.Id -eq $id })
+    $impl = @($idTags | Where-Object { -not $_.IsTest } | ForEach-Object { "$($_.Path):$($_.Declaration)" } |
+        Sort-Object -Unique)
+    $test = @($idTags | Where-Object { $_.IsTest } | ForEach-Object { "$($_.Path):$($_.Declaration)" } |
+        Sort-Object -Unique)
+    $status = if ($impl.Count -and $test.Count) { 'TRACED' }
+              elseif ($impl.Count) { 'UNTESTED' }
+              elseif ($test.Count) { 'UNIMPLEMENTED' }
+              else { 'UNTRACED' }
+    [pscustomobject]@{ Id = $id; Implementation = $impl; Tests = $test; Status = $status }
+}
+$rows = @($rows)
+
+$traced = @($rows | Where-Object { $_.Status -eq 'TRACED' }).Count
+$gaps = @($rows | Where-Object { $_.Status -in @('UNTESTED', 'UNTRACED') })
+
 $report = @()
-$report += "# Traceability Report"
+$report += "# Traceability Report $EmDash $SpecPath $EmDash $((Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ'))"
 $report += ""
-$report += "**Generated**: $(Get-Date -Format 'o')   **Spec**: $SpecPath"
-$report += "**Requirements**: $($specIds.Count)   **Fully traced**: $($fullyTraced.Count)   **Gaps**: $($implementedButUntested.Count + $specifiedButUnimplemented.Count)   **Orphans**: $($orphans.Count)"
+$report += "Summary: $($rows.Count) requirements $MidDot $traced fully traced $MidDot $($gaps.Count) untraced $MidDot " +
+    "$($orphans.Count) orphaned tags"
 $report += ""
-
-if ($fullyTraced.Count -gt 0) {
-    $report += "## Fully traced"
-    $report += "| Requirement | Implementation | Verifying tests |"
-    $report += "|-------------|----------------|-----------------|"
-    foreach ($id in ($fullyTraced | Sort-Object)) {
-        $impl = $implementations[$id] -join ", "
-        $test = $verifyingTests[$id] -join ", "
-        $report += "| $id | $impl | $test |"
-    }
-    $report += ""
+$report += "| Requirement | Implementation | Tests | Status |"
+$report += "|---|---|---|---|"
+foreach ($row in $rows) {
+    $impl = if ($row.Implementation.Count) { $row.Implementation -join '<br>' } else { $EmDash }
+    $test = if ($row.Tests.Count) { $row.Tests -join '<br>' } else { $EmDash }
+    $report += "| $($row.Id) | $impl | $test | $($row.Status) |"
 }
-
-if ($implementedButUntested.Count -gt 0) {
-    $report += "## Implemented but untested"
-    $report += "| Requirement | Implementation |"
-    $report += "|-------------|----------------|"
-    foreach ($id in ($implementedButUntested | Sort-Object)) {
-        $impl = $implementations[$id] -join ", "
-        $report += "| $id | $impl |"
+$report += ""
+$report += "## Untraced"
+if ($gaps.Count) {
+    foreach ($row in $gaps) {
+        $reason = if ($row.Status -eq 'UNTESTED') { 'no verifying test' } else { 'no implementation and no test' }
+        $report += "- $($row.Id) $EmDash $reason"
     }
-    $report += ""
-}
+} else { $report += "- none" }
+$report += ""
+$report += "## Orphaned tags"
+if ($orphans.Count) {
+    foreach ($orphan in $orphans) { $report += "- $($orphan.Path):$($orphan.Line) $Arrow $($orphan.Id) (not in spec)" }
+} else { $report += "- none" }
 
-if ($specifiedButUnimplemented.Count -gt 0) {
-    $report += "## Specified but unimplemented"
-    $report += "| Requirement |"
-    $report += "|-------------|"
-    foreach ($id in ($specifiedButUnimplemented | Sort-Object)) {
-        $report += "| $id |"
-    }
-    $report += ""
-}
-
-if ($orphans.Count -gt 0) {
-    $report += "## Orphaned annotations"
-    $report += "| Annotation | Location |"
-    $report += "|------------|----------|"
-    foreach ($orphan in $orphans) {
-        $report += "| $($orphan.Id) | $($orphan.Path) |"
-    }
-    $report += ""
-}
-
-# Write output
-$report | Out-File -FilePath $OutputPath -Encoding UTF8
+$outputDir = Split-Path -Parent $OutputPath
+if ($outputDir -and -not (Test-Path -LiteralPath $outputDir)) { New-Item -ItemType Directory -Path $outputDir | Out-Null }
+$fullOutputPath = if ([System.IO.Path]::IsPathRooted($OutputPath)) { $OutputPath } else { Join-Path (Get-Location).Path $OutputPath }
+[System.IO.File]::WriteAllLines($fullOutputPath, [string[]]$report,
+    (New-Object System.Text.UTF8Encoding($false)))
 
 Write-Host "Report written to: $OutputPath"
-Write-Host ""
-Write-Host "Summary:"
-Write-Host "  Fully traced: $($fullyTraced.Count)"
-Write-Host "  Implemented but untested: $($implementedButUntested.Count)"
-Write-Host "  Specified but unimplemented: $($specifiedButUnimplemented.Count)"
-Write-Host "  Orphaned annotations: $($orphans.Count)"
+Write-Host "  Requirements: $($rows.Count)  Traced: $traced  Untraced: $($gaps.Count)  Orphaned tags: $($orphans.Count)"
 
-# Exit code
-$hasGaps = ($implementedButUntested.Count -gt 0) -or ($specifiedButUnimplemented.Count -gt 0) -or ($orphans.Count -gt 0)
-if ($FailOnGaps -and $hasGaps) {
-    exit 1
-}
-
+if ($FailOnGaps -and ($gaps.Count -gt 0 -or $orphans.Count -gt 0)) { exit 1 }
 exit 0

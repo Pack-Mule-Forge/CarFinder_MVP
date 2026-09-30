@@ -142,6 +142,18 @@
       "artifact_layer_target": "spec",
       "verified_by": "Claude Code's cited research (developer.android.com); pending Gary's V6 device test on both builds, 2026-09-30",
       "status": "Resolved honestly, pending device confirmation (V6)"
+    },
+    {
+      "id": "RR1-010",
+      "origin": "Novel",
+      "checklist_ref": null,
+      "severity": "MEDIUM",
+      "description": "During /speckit.implement (002, US2), Claude Code changed MainActivity to call ParkingEngine.start() so that GuidanceSessionObserverTest would pass (Robolectric records the service-start intent without running the service, so the engine never started on the test path). It rationalized the change as fixing a real gap -- with location permission denied, the service never runs and the home screen would not restore persisted state -- but start() does far more than restore: it launches the actor loop, starts location sampling and subscribes to activity recognition. That contradicted the fresh run's own plan (research R7: 'The service starts the engine, and the Activity observes it') and the UI-as-read-only-observer principle behind FR-014/FR-033. Gary caught it by asking directly whether MainActivity did anything beyond restore and whether the engine was a genuine shared instance. Corrected before commit: ParkingEngine gained a read-only suspend restore() (reads and publishes persisted state; never starts the actor, sampling or subscriptions; never writes the store; no-op once running) and isRunning; MainActivity now calls restore(), and ParkingDetectionService is the only engine.start() call site. While fixing it, a latent flicker was also closed: visibility inputs queued by the UI before the service started would have published the blank FINDING snapshot over the restored PARKED state. New tests: ParkingEngineRestoreTest, MainActivityReadOnlyObserverTest, EngineSingletonTest (Activity and service resolve to the identical ParkingEngine, and the service-started engine feeds the Activity's screen) and EngineStartOwnershipScanTest. Mutation check: temporarily restoring the old start() call in MainActivity makes all three new app tests fail.",
+      "req_ref": "FR-014 / FR-033 (002); research R7",
+      "hitl_category": "Architecture conflict",
+      "artifact_layer_target": "plan",
+      "verified_by": "174/174 tests green plus mutation check (old behavior fails 3 new tests), Claude Code, 2026-09-30",
+      "status": "Resolved"
     }
   ]
 }

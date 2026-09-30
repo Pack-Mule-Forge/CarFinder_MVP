@@ -1,9 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">CarFinder_MVP</string>
-    <!-- Guidance view state messages (FR-019, FR-020, FR-021) - exact wording per spec -->
-    <string name="state_driving">Driving - Waiting to Park</string>
-    <string name="state_no_location">Parked location unavailable.</string>
-    <string name="state_parking_soon">Sensing you will be Parking Soon.</string>
-    <string name="state_arrived">You have arrived</string>
-    <string name="state_arrived_question">Do you see your car?</string>
+    <string name="app_name">Car Finder</string>
+
+    <!-- Persistent detection notification (FR-033) -->
+    <string name="notification_channel_name">Parking detection</string>
+    <string name="notification_parked">Parked location saved</string>
+    <string name="notification_needs_background">Background detection needs location access set to \'Allow all the time\'. Tap to change.</string>
+
+    <!-- Home screen status views (FR-016): exact wording, capitalization and punctuation -->
+    <string name="status_driving">Driving - Waiting to Park.</string>
+    <string name="status_unavailable">Parked location unavailable.</string>
+    <string name="status_parking">Sensing you will be Parking Soon.</string>
+
+    <!-- Guidance display (FR-022) -->
+    <string name="guidance_you">You</string>
+    <string name="guidance_your_car">Your car</string>
+
+    <!-- Arrival (FR-028, FR-029) -->
+    <string name="arrival_message">You have arrived</string>
+    <string name="arrival_prompt">Do you see your car?</string>
+    <string name="arrival_yes">Yes</string>
+    <string name="arrival_no">No</string>
 </resources>

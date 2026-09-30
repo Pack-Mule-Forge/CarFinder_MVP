@@ -91,9 +91,9 @@ It stops early if foreground location is denied.
 
 | Component | Contract |
 |---|---|
-| `ParkingDetectionService` | A foreground service with `foregroundServiceType="location"`. `onStartCommand` calls `startForeground(notification)` and then `engine.start()`, and returns `START_STICKY`. The notification text follows `EngineState.lifecycle`. It is started only when `LOCATION_FOREGROUND` is `GRANTED`. |
+| `ParkingDetectionService` | The only caller of `engine.start()`. A foreground service with `foregroundServiceType="location"`. `onStartCommand` calls `startForeground(notification)` and then `engine.start()`, and returns `START_STICKY`. The notification text follows `EngineState.lifecycle`. It is started only when `LOCATION_FOREGROUND` is `GRANTED`. |
 | `BootReceiver` | On `BOOT_COMPLETED` or `MY_PACKAGE_REPLACED`, it starts the service if `LOCATION_FOREGROUND` and `LOCATION_BACKGROUND` are both `GRANTED` (research R5). |
-| `MainActivity` | On create, it calls `permissions.request(all)`, starts the service if the grant succeeded, registers `GuidanceSessionObserver`, and calls `setContent { HomeScreen(uiState, …) }` (see [guidance-ui.md](guidance-ui.md)). On resume, it refreshes the permission status and starts the service if `LOCATION_FOREGROUND` is GRANTED, which is harmless if it is already running. That covers a permission granted later in system Settings. |
+| `MainActivity` | A read-only observer of the engine. On create, it calls `engine.restore()` (never `start()`), calls `permissions.request(all)`, starts the service if the grant succeeded, registers `GuidanceSessionObserver`, and calls `setContent { HomeScreen(uiState, …) }` (see [guidance-ui.md](guidance-ui.md)). On resume, it refreshes the permission status and starts the service if `LOCATION_FOREGROUND` is GRANTED, which is harmless if it is already running. That covers a permission granted later in system Settings. |
 | `GuidanceSessionObserver` | A `DefaultLifecycleObserver`. `onStart` calls `engine.setGuidanceVisible(true)` and `heading.start()`, and `onStop` reverses both. |
 | `CarFinderApplication` | The app-scoped graph. It exposes `open fun createAdapters(): PlatformAdapters = createPlatformAdapters(this)` so tests can substitute fakes. |
 

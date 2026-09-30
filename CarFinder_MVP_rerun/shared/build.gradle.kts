@@ -1,49 +1,44 @@
-// Recipe for the `shared` module: Kotlin Multiplatform code (state machine, geometry, models)
-// plus thin Android adapters (location, compass, permissions).
-
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
-    // CHANGED: was `android.library`. AGP 9 no longer allows com.android.library together with
-    // Kotlin Multiplatform; this plugin is the replacement built for exactly this combination.
     alias(libs.plugins.android.kotlin.multiplatform.library)
-    // REMOVED: the protobuf plugin. Nothing in `shared` uses protobuf; the .proto file and the
-    // DataStore adapter live in the `app` module, so the protobuf plugin now lives there.
+    alias(libs.plugins.kotlin.serialization)
 }
 
 kotlin {
-    // CHANGED: replaces the old `androidTarget { ... }` block and the `android { ... }` block.
-    // These are the Android settings for this module.
-    androidLibrary {
-        namespace = "com.packmuleforge.carfinder.shared"
-        compileSdk = 37   // same Android version the app compiles against
-        minSdk = 24       // oldest phone supported (Android 7.0)
+    android {
+        namespace = "com.packmuleforge.carfindermvp.shared"
+        compileSdk = 37
+        minSdk = 26
 
-        // Runs the tests on your computer (no phone needed). Without this, tests in commonTest
-        // would not run for the Android target.
-        // VERIFY: check the exact name against https://developer.android.com/kotlin/multiplatform/plugin
-        withHostTest { }
+        withHostTestBuilder {}.configure {
+            isIncludeAndroidResources = true
+        }
     }
 
     sourceSets {
-        // commonMain = code that would work on any platform (Android now, iOS later).
         commonMain.dependencies {
             implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.kotlinx.serialization.json)
         }
-        // commonTest = tests for that shared code.
         commonTest.dependencies {
             implementation(libs.kotlin.test)
-            // ADDED: runTest { } used by the shared-logic tests.
             implementation(libs.kotlinx.coroutines.test)
+            implementation(project(":shared-testing"))
         }
-        // androidMain = Android-only code (the adapters).
         androidMain.dependencies {
             implementation(libs.play.services.location)
-            // REMOVED: androidx.datastore + protobuf-kotlin (unused here; they belong to `app`).
+            implementation(libs.androidx.datastore)
+            implementation(libs.androidx.core.ktx)
+            // ActivityResultRegistry for AndroidPermissionController (research R6).
+            implementation(libs.androidx.activity.compose)
+            implementation(libs.androidx.fragment.ktx)
         }
-        // REMOVED: androidUnitTest / junit. There are no Android-only unit tests in this module,
-        // and AGP 9 renames that source set (androidHostTest) anyway.
+        getByName("androidHostTest").dependencies {
+            implementation(libs.kotlin.test.junit)
+            implementation(libs.junit)
+            implementation(libs.robolectric)
+            implementation(libs.androidx.test.core)
+            implementation(libs.kotlinx.coroutines.test)
+        }
     }
 }
-
-// REMOVED: the old `android { ... }` block, `kotlinOptions`, and `protobuf { ... }` block.
-// Their settings moved into `androidLibrary { ... }` above or into the `app` module.

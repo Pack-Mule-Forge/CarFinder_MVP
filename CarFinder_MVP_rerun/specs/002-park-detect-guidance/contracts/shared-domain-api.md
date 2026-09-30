@@ -107,13 +107,21 @@ data class Transition(
 class ParkingEngine(adapters: PlatformAdapters, scope: CoroutineScope) {
     val state: StateFlow<EngineState>
     val transitions: SharedFlow<Transition>          // future telemetry/history hook
-    fun start()                                      // restore → subscribe location/activity; idempotent
+    val isRunning: Boolean
+    suspend fun restore()                            // UI only: read-only; publishes persisted state, starts nothing
+    fun start()                                      // service only: restore → actor + location/activity; idempotent
     fun stop()
     fun setGuidanceVisible(visible: Boolean)         // switches IDLE_WATCH ↔ GUIDANCE profile in PARKED
 }
 ```
 
 `ParkingEngine` covers FR-006, FR-014, FR-018 and FR-033 (together with the service).
+
+**Entry-point ownership**: `start()` runs detection (the actor loop, location sampling, activity recognition) and
+is called only from `ParkingDetectionService`'s startup path. `restore()` is the UI's read-only entry point: it
+reads and publishes the persisted state for display, never starts any subscription or the actor, never writes
+the store, and has no effect once the engine is running. `setGuidanceVisible` only records visibility until the
+engine has restored, so the UI can call it before the service starts without starting anything.
 
 ```kotlin
 class HomeScreenPresenter(

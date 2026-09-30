@@ -25,3 +25,5 @@ dependencyResolutionManagement {
 rootProject.name = "CarFinder_MVP"
 include(":app")
 include(":shared")
+include(":shared-testing")
+include(":benchmark")

@@ -61,7 +61,7 @@ These are not repeated in each task.
 **Purpose**: Set up the Gradle modules `:shared` (KMP) and `:app` (Android) so that the project builds, with the
 dependency set from plan.md's Technical Context.
 
-- [ ] T001 Update `gradle/libs.versions.toml`:
+- [X] T001 Update `gradle/libs.versions.toml`:
   - Bump `kotlinxCoroutines` to the current stable 1.10.x.
   - Bump `datastoreVersion` to the current stable 1.1.x.
   - Bump `lifecycleRuntimeKtx` and `activityCompose` to their current stable versions.
@@ -72,9 +72,9 @@ dependency set from plan.md's Technical Context.
   - Remove the `protobuf` plugin and the `protobuf-kotlin` and `androidx-datastore-proto` libraries (research
     R4).
   - Keep the existing explanatory comments style.
-- [ ] T002 Update the root `build.gradle.kts`. Remove `alias(libs.plugins.protobuf) apply false`, and add
+- [X] T002 Update the root `build.gradle.kts`. Remove `alias(libs.plugins.protobuf) apply false`, and add
   `alias(libs.plugins.kotlin.serialization) apply false`. Keep the KMP-before-Android plugin ordering comment.
-- [ ] T003 Create `shared/build.gradle.kts`:
+- [X] T003 Create `shared/build.gradle.kts`:
   - Apply the plugins `kotlin.multiplatform`, `android.kotlin.multiplatform.library` and `kotlin.serialization`.
   - In `kotlin { androidLibrary { namespace = "com.packmuleforge.carfindermvp.shared"; compileSdk = <latest
     stable supported by AGP 9.3>; minSdk = 26; withHostTestBuilder {} } }`, set `commonMain` dependencies to
@@ -85,7 +85,7 @@ dependency set from plan.md's Technical Context.
   - Set `androidHostTest` dependencies to `kotlin-test-junit`, `junit`, `robolectric`, `androidx-test-core` and
     `kotlinx-coroutines-test`.
   - Enable `isIncludeAndroidResources = true` for host tests.
-- [ ] T004 Create `app/build.gradle.kts`:
+- [X] T004 Create `app/build.gradle.kts`:
   - Apply the plugins `android.application` and `kotlin.compose`.
   - Set `namespace` and `applicationId` to `com.packmuleforge.carfindermvp`, `minSdk = 26`, and
     `compileSdk`/`targetSdk` equal to the `:shared` value.
@@ -97,7 +97,7 @@ dependency set from plan.md's Technical Context.
   - Add the test dependencies `junit`, `kotlin-test-junit`, `robolectric`, `androidx-test-core`, the Compose BOM
     with `ui-test-junit4`, and `kotlinx-coroutines-test`.
   - Add `debugImplementation` of `ui-test-manifest` and `ui-tooling`.
-- [ ] T005 Create the `:shared-testing` KMP module in `shared-testing/build.gradle.kts`. It uses the same plugins
+- [X] T005 Create the `:shared-testing` KMP module in `shared-testing/build.gradle.kts`. It uses the same plugins
   and the same `androidLibrary` settings as `:shared`, with `namespace =
   "com.packmuleforge.carfindermvp.shared.testing"`:
   - Its `commonMain` depends on `project(":shared")`, `kotlinx-coroutines-test` and `kotlin-test`.
@@ -106,16 +106,16 @@ dependency set from plan.md's Technical Context.
     ":shared-testing"))` to `:app`.
 
   It exists because test source sets are not visible to other modules, and `:app` tests need the fakes.
-- [ ] T006 [P] Create a minimal `app/src/main/AndroidManifest.xml` with an `<application>` element
+- [X] T006 [P] Create a minimal `app/src/main/AndroidManifest.xml` with an `<application>` element
   (`android:name=".CarFinderApplication"`, label and theme) and an exported `MainActivity` with the
   MAIN/LAUNCHER intent filter. Permissions, the service and the receiver are added in US1 (T046).
-- [ ] T007 [P] Create the placeholder `AM/CarFinderApplication.kt` (an empty `Application` subclass) and
+- [X] T007 [P] Create the placeholder `AM/CarFinderApplication.kt` (an empty `Application` subclass) and
   `AM/MainActivity.kt` (a `ComponentActivity` calling `setContent { }` with an empty theme), plus
   `AM/ui/theme/Theme.kt` holding a Material3 `CarFinderTheme`. Also add
   `app/src/main/res/values/strings.xml` with `app_name`.
-- [ ] T008 [P] Ensure the repository root `.gitignore` covers `build/`, `.gradle/`, `local.properties`, `.idea/`,
+- [X] T008 [P] Ensure the repository root `.gitignore` covers `build/`, `.gradle/`, `local.properties`, `.idea/`,
   `*.iml`, `.env` and `*.local.*`. Create the file if it is missing.
-- [ ] T009 Run `.\gradlew.bat :shared:assemble :app:assembleDebug`, and fix the build configuration until it
+- [X] T009 Run `.\gradlew.bat :shared:assemble :app:assembleDebug`, and fix the build configuration until it
   succeeds. The exact host-test task names from `gradlew tasks --all` are needed later. Confirm that Gradle
   resolves the `:shared` commonTest → `:shared-testing` → `:shared` main dependency. If KMP rejects that cycle,
   keep `:shared-testing` for `:app` tests only and keep a copy of the fakes in `:shared` `commonTest`.
@@ -133,20 +133,20 @@ traceability tooling that every story depends on.
 
 ### Tests for Foundational
 
-- [ ] T010 [P] Write `ST/guidance/GeoMathTest.kt` (FR-020, FR-021 and FR-025 support):
+- [X] T010 [P] Write `ST/guidance/GeoMathTest.kt` (FR-020, FR-021 and FR-025 support):
   - The haversine distance for published reference pairs is within 0.5 %.
   - Two identical points are 0 m apart.
   - The initial bearing for due north, east, south and west is 0, 90, 180 and 270 respectively.
   - The bearing is always in `[0, 360)`.
   - A centroid of points that straddle the antimeridian is correct.
-- [ ] T011 [P] Write `ST/persistence/PersistedParkingRecordTest.kt` (FR-018, FR-011):
+- [X] T011 [P] Write `ST/persistence/PersistedParkingRecordTest.kt` (FR-018, FR-011):
   - The default record is `{schemaVersion: 1, state: FINDING, parkedLocation: null}`.
   - `normalized()` turns "`state == PARKED && parkedLocation == null` becomes FINDING" and drops the location for
     "`state != PARKED && parkedLocation != null`".
   - A JSON round-trip preserves every field.
   - The record holds exactly one `parkedLocation: ParkedLocation?` field and no collection of locations
     (FR-013).
-- [ ] T012 [P] Write `SAT/ConstantsLiteralScanTest.kt` (QR-002, FR-030). This JVM host test walks
+- [X] T012 [P] Write `SAT/ConstantsLiteralScanTest.kt` (QR-002, FR-030). This JVM host test walks
   `shared/src/*Test/` and `app/src/test/`, resolving paths from the repository root (the module directory's
   parent), and fails if any test file contains an FR-030 value as a standalone numeric token. The values checked
   are `5.0`, `25.0`, `10.0`, `45.0`, `500.0`, `2_000`/`2000`, `5_000`/`5000` and `30_000`/`30000`, matched with
@@ -154,10 +154,10 @@ traceability tooling that every story depends on.
   (`CONVERGENCE_SAMPLE_COUNT`, `SPEED_FILTER_WINDOW_SIZE` = 3) cannot be scanned reliably, so they are covered
   by review in T101. The test must also assert that each FR-030 constant name is declared exactly once, in
   `SC/domain/CarFinderConstants.kt`.
-- [ ] T013 [P] Write `SAT/CommonMainPortabilityScanTest.kt` (QR-010, Constitution V, research R9). This JVM
+- [X] T013 [P] Write `SAT/CommonMainPortabilityScanTest.kt` (QR-010, Constitution V, research R9). This JVM
   host test walks `shared/src/commonMain/` and fails, listing `file:line`, on any `import android.`,
   `import java.`, `String.format(` or `System.` token.
-- [ ] T014 [P] Write `TT/tests/Get-TraceabilityReport.Tests.ps1` (Pester 5, QR-005, QR-006, QR-007) together
+- [X] T014 [P] Write `TT/tests/Get-TraceabilityReport.Tests.ps1` (Pester 5, QR-005, QR-006, QR-007) together
   with fixture trees under `TT/tests/fixtures/`. The fixtures are a mini `spec.md` with FR-001, FR-002 and
   QR-001, and `src/commonMain` and `src/commonTest` `.kt` files. The tests cover:
   - The FR and QR ID counts.
@@ -168,7 +168,7 @@ traceability tooling that every story depends on.
 
 ### Implementation for Foundational
 
-- [ ] T015 [P] Create `SC/domain/CarFinderConstants.kt` (FR-030) as an `object` with exactly these names and
+- [X] T015 [P] Create `SC/domain/CarFinderConstants.kt` (FR-030) as an `object` with exactly these names and
   values:
   - `PARKING_SPEED_THRESHOLD_MPH = 5.0`
   - `DRIVING_SPEED_THRESHOLD_MPH = 25.0`
@@ -183,7 +183,7 @@ traceability tooling that every story depends on.
 
   It also holds the conversion factors `METERS_PER_SECOND_TO_MPH`, `METERS_TO_FEET` and `FEET_PER_MILE`. Give
   each constant a KDoc line explaining its purpose and `@requirement FR-030`.
-- [ ] T016 [P] Create `SC/domain/TuningConstants.kt` as an `object` with:
+- [X] T016 [P] Create `SC/domain/TuningConstants.kt` as an `object` with:
   - `IDLE_WATCH_SAMPLING_INTERVAL_MILLIS = 20_000L`
   - `DRIVING_SAMPLING_INTERVAL_MILLIS = 5_000L`
   - `GUIDANCE_SAMPLING_INTERVAL_MILLIS = 1_000L`
@@ -191,32 +191,32 @@ traceability tooling that every story depends on.
   - `CONE_LENGTH_FRACTION = 0.8`
 
   Each gets a KDoc citing its research section (R2 or R10).
-- [ ] T017 [P] Create `SC/domain/LifecycleState.kt`, containing `@Serializable enum class LifecycleState {
+- [X] T017 [P] Create `SC/domain/LifecycleState.kt`, containing `@Serializable enum class LifecycleState {
   FINDING, DRIVING, PARKING, PARKED }` (FR-001, FR-011). Document the invariant "`state == PARKED` ⇔
   `parkedLocation != null` (FR-018)".
-- [ ] T018 [P] Create `SC/domain/LocationReading.kt` as a data class with the fields `latitude: Double`,
+- [X] T018 [P] Create `SC/domain/LocationReading.kt` as a data class with the fields `latitude: Double`,
   `longitude: Double`, `accuracyMeters: Double?` (null if the provider gave no horizontal accuracy),
   `speedMetersPerSecond: Double?` (null if the provider gave no speed), `elapsedRealtimeMillis: Long` and
   `epochMillis: Long`. Add the computed properties `hasAccuracy` and `speedMph: Double?`, which uses
   `CarFinderConstants.METERS_PER_SECOND_TO_MPH`.
-- [ ] T019 [P] Create `SC/domain/ParkedLocation.kt` as an `@Serializable data class` with `latitude: Double`,
+- [X] T019 [P] Create `SC/domain/ParkedLocation.kt` as an `@Serializable data class` with `latitude: Double`,
   `longitude: Double`, `accuracyMeters: Double` ("always non-null and > 0", enforced with `require`) and
   `capturedAtEpochMillis: Long` (FR-012, FR-013).
-- [ ] T020 [P] Create `SC/domain/HeadingReading.kt` as a data class with `trueHeadingDegrees: Double`
+- [X] T020 [P] Create `SC/domain/HeadingReading.kt` as a data class with `trueHeadingDegrees: Double`
   ("[0, 360), true north, remapped to screen-up", enforced with `require`) and `elapsedRealtimeMillis: Long`.
-- [ ] T021 [P] Create `SC/domain/SamplingProfile.kt`, containing `enum class SamplingProfile { IDLE_WATCH,
+- [X] T021 [P] Create `SC/domain/SamplingProfile.kt`, containing `enum class SamplingProfile { IDLE_WATCH,
   DRIVING, PARKING, GUIDANCE }` with an `intervalMillis` property that maps to
   `TuningConstants.IDLE_WATCH_SAMPLING_INTERVAL_MILLIS`, `TuningConstants.DRIVING_SAMPLING_INTERVAL_MILLIS`,
   `CarFinderConstants.PARKING_SAMPLING_INTERVAL_MILLIS` and
   `TuningConstants.GUIDANCE_SAMPLING_INTERVAL_MILLIS` (FR-006, research R2).
-- [ ] T022 Create `SC/persistence/PersistedParkingRecord.kt`, an `@Serializable data class` with `schemaVersion:
+- [X] T022 Create `SC/persistence/PersistedParkingRecord.kt`, an `@Serializable data class` with `schemaVersion:
   Int = 1`, `state: LifecycleState = FINDING` and `parkedLocation: ParkedLocation? = null`. Add
   `fun normalized()` per data-model, and a `companion val DEFAULT` (FR-011, FR-014, FR-018). This depends on
   T017 and T019, and makes T011 pass.
-- [ ] T023 [P] Create `SC/persistence/ParkingStore.kt`, the interface with
+- [X] T023 [P] Create `SC/persistence/ParkingStore.kt`, the interface with
   `suspend fun read(): PersistedParkingRecord` ("never throws; corrupted → default record") and
   `suspend fun write(record: PersistedParkingRecord)` ("atomic") (FR-014, QR-010).
-- [ ] T024 [P] Create the platform interfaces in `SC/platform/` exactly as in
+- [X] T024 [P] Create the platform interfaces in `SC/platform/` exactly as in
   [contracts/platform-adapters.md](contracts/platform-adapters.md):
   - `LocationSource.kt`
   - `HeadingSource.kt`
@@ -225,11 +225,11 @@ traceability tooling that every story depends on.
   - `PermissionController.kt` (`Capability`, `RequestMode`, `CapabilityStatus`, interface)
 
   These implement QR-010, with KDoc stating each adapter's "MUST" behavior from the contract table.
-- [ ] T025 [P] Create `SC/guidance/GeoMath.kt`, an `object GeoMath` with `distanceMeters` (haversine, WGS-84
+- [X] T025 [P] Create `SC/guidance/GeoMath.kt`, an `object GeoMath` with `distanceMeters` (haversine, WGS-84
   mean radius 6_371_008.8 m), `initialBearingDegrees` (forward azimuth normalized to `[0, 360)`) and
   `centroid(points)`. The centroid is the mean latitude, and the mean longitude computed from deltas relative to
   the first point to handle the antimeridian (research R8). This makes T010 pass.
-- [ ] T026 Create the test fakes in
+- [X] T026 Create the test fakes in
   `shared-testing/src/commonMain/kotlin/com/packmuleforge/carfindermvp/shared/testing/`, as described in the
   Fakes section of the platform-adapters contract:
   - `FakeLocationSource.kt`: `emit(reading)`, and records `setProfile` calls in `profileHistory`.
@@ -242,7 +242,7 @@ traceability tooling that every story depends on.
     from constants.
 
   This depends on T018 to T024.
-- [ ] T027 Create `SC/platform/PlatformAdapters.kt`, containing only the common `class PlatformAdapters(location,
+- [X] T027 Create `SC/platform/PlatformAdapters.kt`, containing only the common `class PlatformAdapters(location,
   heading, activity, store, monotonicClock, wallClock, permissions)`. Then:
   - In `AM/CarFinderApplication.kt`, add `open fun createAdapters(): PlatformAdapters` with the body `TODO("Wired
     to createPlatformAdapters(this) in T046")` and a `// TODO:` comment giving the reason: it is a deliberate
@@ -252,7 +252,7 @@ traceability tooling that every story depends on.
 
   T037, T038, T088 and every `:app` Activity test use it through `@Config(application =
   TestCarFinderApplication::class)`. This depends on T026.
-- [ ] T028 Extend `TT/Get-TraceabilityReport.ps1` per [contracts/traceability.md](contracts/traceability.md):
+- [X] T028 Extend `TT/Get-TraceabilityReport.ps1` per [contracts/traceability.md](contracts/traceability.md):
   - The default `-SpecPath` is `specs/002-park-detect-guidance/spec.md` and the default `-OutputPath` is
     `specs/002-park-detect-guidance/traceability.md`.
   - Parse `\*\*(FR|QR)-(\d{3})\*\*`.
@@ -265,7 +265,7 @@ traceability tooling that every story depends on.
   - Add a `# @requirement QR-005, QR-006, QR-007` header comment.
 
   This makes T014 pass.
-- [ ] T029 Run `.\gradlew.bat :shared:allTests` (or the host-test task found in T009) and `Invoke-Pester
+- [X] T029 Run `.\gradlew.bat :shared:allTests` (or the host-test task found in T009) and `Invoke-Pester
   tools\traceability\tests`. T010 to T014 must all pass.
 
 **Checkpoint**: The foundation is ready. User story work can start.
@@ -285,14 +285,14 @@ same store and assert that it is still PARKED with the location present. On a de
 
 ### Tests for User Story 1 ⚠️ (write first, must fail)
 
-- [ ] T030 [P] [US1] Write `ST/domain/SpeedMedianFilterTest.kt` (FR-032). It covers:
+- [X] T030 [P] [US1] Write `ST/domain/SpeedMedianFilterTest.kt` (FR-032). It covers:
   - `null` until `SPEED_FILTER_WINDOW_SIZE` samples have been added.
   - The median of `[slow, spike, slow]` is slow.
   - The window drops its oldest sample FIFO.
   - The even-window median is the mean of the two middle values.
   - The filter is a median, not a consecutive count: `[fast, slow, fast]` gives fast.
   - `add` returns a new filter and leaves the receiver unchanged (immutability).
-- [ ] T031 [P] [US1] Write `ST/domain/ConvergenceWindowTest.kt` (FR-007, FR-008, FR-012). It covers:
+- [X] T031 [P] [US1] Write `ST/domain/ConvergenceWindowTest.kt` (FR-007, FR-008, FR-012). It covers:
   - Three readings `CONVERGENCE_RADIUS_METERS * 0.9` apart in a line do **not** converge, even though each is
     within the radius of the centroid.
   - Three readings pairwise ≤ the radius converge.
@@ -303,7 +303,7 @@ same store and assert that it is still PARKED with the location present. On a de
     reading_i))` (FR-012).
   - `empty()` gives an unconverged window.
   - `add` returns a new window and leaves the receiver unchanged (immutability).
-- [ ] T032 [P] [US1] Write `ST/domain/ParkingStateMachineParkTest.kt` (FR-001 to FR-008, FR-010, FR-011 and
+- [X] T032 [P] [US1] Write `ST/domain/ParkingStateMachineParkTest.kt` (FR-001 to FR-008, FR-010, FR-011 and
   FR-032). It covers:
   - FINDING plus a filtered speed above `DRIVING_SPEED_THRESHOLD_MPH` goes to DRIVING.
   - DRIVING plus a filtered speed ≤ `PARKING_SPEED_THRESHOLD_MPH` goes to PARKING.
@@ -316,7 +316,7 @@ same store and assert that it is still PARKED with the location present. On a de
   - A `null` speed causes no speed transition.
   - After every reduce, `(to == PARKED) == (parkedLocation != null)`.
   - Reducing the same snapshot and event twice gives equal `Transition`s, and the input snapshot is unchanged.
-- [ ] T033 [P] [US1] Write `ST/engine/ParkingEngineParkTest.kt` (FR-002, FR-006, FR-012, FR-014, FR-018,
+- [X] T033 [P] [US1] Write `ST/engine/ParkingEngineParkTest.kt` (FR-002, FR-006, FR-012, FR-014, FR-018,
   FR-033). It uses `runTest` with fakes and covers:
   - `start()` restores from `InMemoryParkingStore`.
   - The PARKING transition sets the `LocationSource` profile to `PARKING`, and the rate is
@@ -328,14 +328,14 @@ same store and assert that it is still PARKED with the location present. On a de
   - Re-creating the engine over the same store restores PARKED with the same location.
   - `start()` is idempotent.
   - The `transitions` SharedFlow emits each transition.
-- [ ] T034 [P] [US1] Write `SAT/DataStoreParkingStoreTest.kt` (FR-014, FR-018, QR-004). It uses a real DataStore
+- [X] T034 [P] [US1] Write `SAT/DataStoreParkingStoreTest.kt` (FR-014, FR-018, QR-004). It uses a real DataStore
   on a JUnit `TemporaryFolder` and covers:
   - A write/read round-trip.
   - A missing file reads as the default FINDING record.
   - A file of garbage bytes reads as default FINDING and does not throw.
   - An unknown `schemaVersion` reads as the default.
   - A write replaces the whole record atomically, so state and location match after the write.
-- [ ] T035 [P] [US1] Write `SAT/FusedLocationSourceTest.kt` (FR-006, FR-033, QR-004). It uses Robolectric with
+- [X] T035 [P] [US1] Write `SAT/FusedLocationSourceTest.kt` (FR-006, FR-033, QR-004). It uses Robolectric with
   `FakeFusedClientPort` and covers:
   - A `Location` without accuracy maps to `accuracyMeters == null`.
   - A `Location` without speed maps to `speedMetersPerSecond == null`.
@@ -346,7 +346,7 @@ same store and assert that it is still PARKED with the location present. On a de
     `PARKING_SAMPLING_INTERVAL_MILLIS`, `minUpdateIntervalMillis` equal to the interval, and
     `maxUpdateDelayMillis == 0`. The previous callback is removed, so at most one subscription is active.
   - A `SecurityException` from the port completes the flow without crashing.
-- [ ] T036 [P] [US1] Write `SAT/AndroidPermissionControllerTest.kt` (QR-004, FR-033, research R6). It uses a
+- [X] T036 [P] [US1] Write `SAT/AndroidPermissionControllerTest.kt` (QR-004, FR-033, research R6). It uses a
   test `ActivityResultRegistry` and covers:
   - The request order is foreground location, then `POST_NOTIFICATIONS` (API 33+), then `ACTIVITY_RECOGNITION`
     (API 29+), then background location (a separate request).
@@ -356,7 +356,7 @@ same store and assert that it is still PARKED with the location present. On a de
   - `status` updates after a request.
 
   Use `@Config(sdk = [...])` to cover the API levels.
-- [ ] T037 [P] [US1] Write `AT/service/ParkingDetectionServiceTest.kt` (FR-033). It uses a Robolectric
+- [X] T037 [P] [US1] Write `AT/service/ParkingDetectionServiceTest.kt` (FR-033). It uses a Robolectric
   `ServiceController` and covers:
   - `onStartCommand` calls `startForeground` with a notification on the detection channel.
   - It returns `START_STICKY`.
@@ -366,7 +366,7 @@ same store and assert that it is still PARKED with the location present. On a de
     `notification_needs_background` string, and its content intent opens the app's permission settings
     (`Settings.ACTION_APPLICATION_DETAILS_SETTINGS` for this package). When both are granted, it shows the
     lifecycle text (spec Edge Cases, FR-033).
-- [ ] T038 [P] [US1] Write `AT/service/BootReceiverTest.kt` (FR-033). It covers:
+- [X] T038 [P] [US1] Write `AT/service/BootReceiverTest.kt` (FR-033). It covers:
   - `BOOT_COMPLETED` and `MY_PACKAGE_REPLACED` start `ParkingDetectionService` only when `LOCATION_FOREGROUND`
     and `LOCATION_BACKGROUND` are both GRANTED.
   - The service is not started otherwise.
@@ -374,16 +374,16 @@ same store and assert that it is still PARKED with the location present. On a de
 
 ### Implementation for User Story 1
 
-- [ ] T039 [P] [US1] Implement `SC/domain/SpeedMedianFilter.kt` (FR-032) per
+- [X] T039 [P] [US1] Implement `SC/domain/SpeedMedianFilter.kt` (FR-032) per
   [contracts/shared-domain-api.md](contracts/shared-domain-api.md). It is an immutable, list-backed FIFO of the
   last `windowSize` speeds in mph. `add()` returns a new filter, and `filtered` is the median once the window is
   full and `null` before that. It is created with `empty()` and is not reset on transitions. This makes T030
   pass.
-- [ ] T040 [P] [US1] Implement `SC/domain/ConvergenceWindow.kt` (FR-007, FR-008, FR-012) as an immutable,
+- [X] T040 [P] [US1] Implement `SC/domain/ConvergenceWindow.kt` (FR-007, FR-008, FR-012) as an immutable,
   list-backed value, where `add()` returns a new window. It ignores readings with `accuracyMeters == null`. `isConverged` is true iff the window is full and the maximum pairwise
   `GeoMath.distanceMeters` is ≤ the radius. `toParkedLocation()` uses `GeoMath.centroid` and the FR-012 accuracy
   formula. `empty()` creates a fresh window. There is no `clear()`. This makes T031 pass.
-- [ ] T041 [US1] Implement `SC/domain/ParkingStateMachine.kt`, containing `MachineSnapshot`, `MachineEvent`
+- [X] T041 [US1] Implement `SC/domain/ParkingStateMachine.kt`, containing `MachineSnapshot`, `MachineEvent`
   (`Reading`, `Restored`), `Transition` and `object ParkingStateMachine { fun reduce(...) }` for the park path
   (FR-001 to FR-008, FR-010, FR-011, FR-013, FR-018, FR-032). The guard order within one reading is:
   1. Any filtered speed `v` above `DRIVING_SPEED_THRESHOLD_MPH` → DRIVING. From PARKING, the window resets to
@@ -397,7 +397,7 @@ same store and assert that it is still PARKED with the location present. On a de
   `Restored` applies `record.normalized()`. Leave a clearly marked branch where PARKED + `v > DRIVING` is handled
   in US5 (T094). Until then PARKED ignores speed. `reduce` is pure, with no clock and no I/O. This makes T032
   pass. It depends on T039 and T040.
-- [ ] T042 [US1] Implement `SC/engine/ParkingEngine.kt` (FR-002, FR-006, FR-012, FR-014, FR-018, FR-033):
+- [X] T042 [US1] Implement `SC/engine/ParkingEngine.kt` (FR-002, FR-006, FR-012, FR-014, FR-018, FR-033):
   - It is a single-consumer actor over a `Channel<EngineInput>` (`LocationReceived`, `ActivityInVehicle`,
     `GuidanceVisibility`, `Restore`) (research R7).
   - `start()` is idempotent. It launches the actor, sends `Restore` (read the store, normalize, and rewrite if
@@ -413,7 +413,7 @@ same store and assert that it is still PARKED with the location present. On a de
     latestFix)`.
 
   This makes T033 pass.
-- [ ] T043 [P] [US1] Implement `SA/DataStoreParkingStore.kt` and `SA/ParkingRecordSerializer.kt` (FR-014,
+- [X] T043 [P] [US1] Implement `SA/DataStoreParkingStore.kt` and `SA/ParkingRecordSerializer.kt` (FR-014,
   FR-018):
   - Use `DataStoreFactory.create(serializer = ParkingRecordSerializer, corruptionHandler =
     ReplaceFileCorruptionHandler { PersistedParkingRecord.DEFAULT }, produceFile = { filesDir/datastore/
@@ -426,7 +426,7 @@ same store and assert that it is still PARKED with the location present. On a de
   - The store is a process singleton, because DataStore forbids two instances per file.
 
   This makes T034 pass.
-- [ ] T044 [P] [US1] Implement `SA/FusedLocationSource.kt` and `SA/FusedClientPort.kt` (FR-006, FR-033):
+- [X] T044 [P] [US1] Implement `SA/FusedLocationSource.kt` and `SA/FusedClientPort.kt` (FR-006, FR-033):
   - The port wraps `FusedLocationProviderClient.requestLocationUpdates` and `removeLocationUpdates`.
   - The source maps `Location` to `LocationReading` using the validation rules from data-model: "Latitude must be
     in [-90, 90] and longitude in [-180, 180]. Readings outside these ranges are dropped and logged"; "A negative
@@ -437,7 +437,7 @@ same store and assert that it is still PARKED with the location present. On a de
   - It catches `SecurityException`, logs it, and completes empty.
 
   This makes T035 pass.
-- [ ] T045 [P] [US1] Implement `SA/AndroidClocks.kt` (`AndroidMonotonicClock` using
+- [X] T045 [P] [US1] Implement `SA/AndroidClocks.kt` (`AndroidMonotonicClock` using
   `SystemClock.elapsedRealtime()`, and `AndroidWallClock` using `System.currentTimeMillis()`), and
   `SA/AndroidPermissionController.kt` (research R6):
   - It is bound to a `ComponentActivity`'s `ActivityResultRegistry` through `attach(activity)` and `detach()`.
@@ -447,7 +447,7 @@ same store and assert that it is still PARKED with the location present. On a de
   - `status` is a `StateFlow` refreshed by `refresh()`, which is called on resume.
 
   This makes T036 pass.
-- [ ] T046 [US1] Add to `SC/platform/PlatformAdapters.kt` the `expect abstract class PlatformContext` and
+- [X] T046 [US1] Add to `SC/platform/PlatformAdapters.kt` the `expect abstract class PlatformContext` and
   `expect fun createPlatformAdapters(context: PlatformContext): PlatformAdapters` (the class itself exists from
   T027). Create `SA/PlatformAdapters.android.kt` (`actual typealias PlatformContext = android.content.Context`,
   and an `actual` factory wiring `FusedLocationSource`, `DataStoreParkingStore`, the clocks and
@@ -455,7 +455,7 @@ same store and assert that it is still PARKED with the location present. On a de
   `createPlatformAdapters(this)`, and remove its `// TODO:` comment.
   Until US2 and US5 replace them, `heading` is a `NoHeadingSource` that always emits `null` and `activity` is a
   `NoActivitySignalSource` that never emits (QR-010, Constitution V).
-- [ ] T047 [US1] Implement `AM/service/DetectionNotification.kt`. It creates a low-importance channel
+- [X] T047 [US1] Implement `AM/service/DetectionNotification.kt`. It creates a low-importance channel
   `parking_detection` and builds an ongoing notification whose text maps each `LifecycleState` to a short status
   from `strings.xml`. If `permissions.status` shows `LOCATION_BACKGROUND` not GRANTED, it instead shows
   `notification_needs_background` ("Background detection needs location access set to 'Allow all the time'.
@@ -463,10 +463,10 @@ same store and assert that it is still PARKED with the location present. On a de
   package (spec Edge Cases). Then implement `AM/service/ParkingDetectionService.kt`: a foreground service that calls
   `startForeground(id, notification, FOREGROUND_SERVICE_TYPE_LOCATION)`, then `engine.start()`, collects
   `engine.state` to update the notification, and returns `START_STICKY` (FR-033). This makes T037 pass.
-- [ ] T048 [US1] Implement `AM/service/BootReceiver.kt` for `BOOT_COMPLETED` and `MY_PACKAGE_REPLACED`. It starts
+- [X] T048 [US1] Implement `AM/service/BootReceiver.kt` for `BOOT_COMPLETED` and `MY_PACKAGE_REPLACED`. It starts
   the service with `ContextCompat.startForegroundService` only if foreground and background location are both
   granted (FR-033, research R5). This makes T038 pass.
-- [ ] T049 [US1] Update `app/src/main/AndroidManifest.xml`:
+- [X] T049 [US1] Update `app/src/main/AndroidManifest.xml`:
   - Add the permissions `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`, `ACCESS_BACKGROUND_LOCATION`,
     `ACTIVITY_RECOGNITION`, `POST_NOTIFICATIONS`, `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_LOCATION` and
     `RECEIVE_BOOT_COMPLETED`.
@@ -474,7 +474,7 @@ same store and assert that it is still PARKED with the location present. On a de
     android:foregroundServiceType="location"/>`.
   - Add `<receiver android:name=".service.BootReceiver" android:exported="true">` with intent filters for
     `BOOT_COMPLETED` and `MY_PACKAGE_REPLACED`.
-- [ ] T050 [US1] Implement `AM/CarFinderApplication.kt` as the app-scoped graph. It holds a process-wide
+- [X] T050 [US1] Implement `AM/CarFinderApplication.kt` as the app-scoped graph. It holds a process-wide
   `CoroutineScope(SupervisorJob() + Dispatchers.Default)`, `adapters = createAdapters()` (the seam from T027, wired
   in T046) and a single `ParkingEngine`. Then:
   - Update `AM/MainActivity.kt` so that `onCreate` attaches the permission controller, launches
@@ -484,13 +484,13 @@ same store and assert that it is still PARKED with the location present. On a de
   - `onResume` calls `permissions.refresh()`, then starts the service if `LOCATION_FOREGROUND` is GRANTED. This
     covers a permission granted later in system Settings (spec Edge Cases), and is harmless if the service is
     already running.
-- [ ] T051 [US1] Write `ST/engine/ParkingReplayTest.kt` (FR-002, FR-011, SC-001, SC-002). It replays scripted
+- [X] T051 [US1] Write `ST/engine/ParkingReplayTest.kt` (FR-002, FR-011, SC-001, SC-002). It replays scripted
   sessions through `ParkingEngine` with fakes, covering four sessions:
   - drive, stop, converge → PARKED, with the stored location equal to the centroid;
   - dead-zone only → FINDING throughout;
   - fresh install with slow readings → no location stored;
   - a long red light (PARKING, then fast) → DRIVING with nothing stored.
-- [ ] T052 [US1] Run `.\gradlew.bat :shared:allTests :app:testDebugUnitTest` and
+- [X] T052 [US1] Run `.\gradlew.bat :shared:allTests :app:testDebugUnitTest` and
   `.\tools\traceability\Get-TraceabilityReport.ps1`. Every US1 test must pass. Then confirm that FR-001 to
   FR-008, FR-010 to FR-014, FR-018, FR-032 and FR-033 each show at least one implementation tag and one test tag.
 
@@ -512,7 +512,7 @@ semantics in `GuidanceDisplayTest`. Advance the fake clock past the staleness ti
 
 ### Tests for User Story 2 ⚠️ (write first, must fail)
 
-- [ ] T053 [P] [US2] Write `ST/guidance/GuidanceCalculatorTest.kt` (FR-019, FR-020, FR-021, FR-025, FR-026). It
+- [X] T053 [P] [US2] Write `ST/guidance/GuidanceCalculatorTest.kt` (FR-019, FR-020, FR-021, FR-025, FR-026). It
   covers:
   - Uncertainty is the parked accuracy plus the fix accuracy.
   - The half-angle is `atan2(u, d)` in degrees, and 90° at `d == 0`.
@@ -521,7 +521,7 @@ semantics in `GuidanceDisplayTest`. Advance the fake clock past the staleness ti
   - Unit selection at `DISTANCE_UNIT_THRESHOLD_FEET − 1`, exactly at it, and `+ 1` gives FEET, FEET and MILES.
   - The text is whole feet ("412 ft") or miles to 2 decimals rounded half-up ("0.37 mi"). Build the expected
     strings from constants and conversion factors, not literals.
-- [ ] T054 [P] [US2] Write `ST/guidance/ConeGeometryCalculatorTest.kt` (FR-022, FR-023, FR-024). It covers:
+- [X] T054 [P] [US2] Write `ST/guidance/ConeGeometryCalculatorTest.kt` (FR-022, FR-023, FR-024). It covers:
   - The apex is at `-CONE_LENGTH_FRACTION/2` and the car anchor at `+CONE_LENGTH_FRACTION/2` along the display
     bearing, with +y up.
   - Sweep start is `bearing − halfAngle`, and the sweep is `2·halfAngle`.
@@ -529,9 +529,9 @@ semantics in `GuidanceDisplayTest`. Advance the fake clock past the staleness ti
   - The half-angle and bearing are echoed back.
   - No centerline field exists. Assert this by reflection over the property names, or by the documented field
     list.
-- [ ] T055 [P] [US2] Write `ST/guidance/FixCurrencyTest.kt` (FR-034). A fix is current at an age of exactly
+- [X] T055 [P] [US2] Write `ST/guidance/FixCurrencyTest.kt` (FR-034). A fix is current at an age of exactly
   `FIX_STALENESS_TIMEOUT_MILLIS` and not current at timeout + 1. It uses the monotonic time, not the epoch time.
-- [ ] T056 [P] [US2] Write `ST/guidance/DefaultViewSelectorTest.kt` (FR-016, FR-031). It checks the priority
+- [X] T056 [P] [US2] Write `ST/guidance/DefaultViewSelectorTest.kt` (FR-016, FR-031). It checks the priority
   order in all state combinations:
   - DRIVING → Driving
   - FINDING → Unavailable
@@ -539,7 +539,7 @@ semantics in `GuidanceDisplayTest`. Advance the fake clock past the staleness ti
     accuracy, null heading, no fix)
   - PARKING → Parking
   - PARKED with guidance available → Guidance
-- [ ] T057 [P] [US2] Write `ST/engine/HomeScreenPresenterGuidanceTest.kt` (FR-017, FR-019, FR-031,
+- [X] T057 [P] [US2] Write `ST/engine/HomeScreenPresenterGuidanceTest.kt` (FR-017, FR-019, FR-031,
   FR-034, QR-009, SC-010). It uses fakes and a `TestScope` and covers:
   - PARKED with a current fix and a heading gives `Guidance` with the expected cone and distance.
   - Heading `null` gives `Unavailable`, and the lifecycle stays PARKED with the location kept (assert on
@@ -551,23 +551,23 @@ semantics in `GuidanceDisplayTest`. Advance the fake clock past the staleness ti
   - A fresh fix restores `Guidance`.
   - A fix with null accuracy gives `Unavailable`.
   - Equal consecutive states are not re-emitted.
-- [ ] T058 [P] [US2] Write `ST/engine/ParkingEngineGuidanceProfileTest.kt` (research R2). It covers:
+- [X] T058 [P] [US2] Write `ST/engine/ParkingEngineGuidanceProfileTest.kt` (research R2). It covers:
   - `setGuidanceVisible(true)` in PARKED switches the profile to `GUIDANCE`, and `false` switches it back to
     `IDLE_WATCH`.
   - Guidance visibility is ignored for the profile in the other states.
   - Only one profile is active at a time, checked through `FakeLocationSource.profileHistory`.
-- [ ] T059 [P] [US2] Write `SAT/HeadingMathTest.kt` (FR-021, QR-004, research R3). It uses the pure
+- [X] T059 [P] [US2] Write `SAT/HeadingMathTest.kt` (FR-021, QR-004, research R3). It uses the pure
   `HeadingMath.azimuth(rotationVector, displayRotation, declinationDegrees)` with synthetic rotation vectors for a
   device facing N, E, S and W in portrait, with display rotations 0, 90, 180 and 270. It checks that the
   declination is added and that the output is normalized to `[0, 360)`.
-- [ ] T060 [P] [US2] Write `SAT/RotationVectorHeadingSourceTest.kt` (FR-031, QR-004). It uses Robolectric with a
+- [X] T060 [P] [US2] Write `SAT/RotationVectorHeadingSourceTest.kt` (FR-031, QR-004). It uses Robolectric with a
   `FakeSensorPort` and covers:
   - No rotation-vector sensor falls back to the geomagnetic one, and with neither it emits `null`.
   - Accuracy `SENSOR_STATUS_UNRELIABLE` emits `null`.
   - No event for `CarFinderConstants.HEADING_STALENESS_TIMEOUT_MILLIS` emits `null` (FR-030, FR-031).
   - `start()` and `stop()` register and unregister the listener.
   - `updateDeclinationFrom(fix)` changes the output heading.
-- [ ] T061 [P] [US2] Write `AT/ui/GuidanceDisplayTest.kt` (QR-003, FR-020 to FR-026). It uses Robolectric with
+- [X] T061 [P] [US2] Write `AT/ui/GuidanceDisplayTest.kt` (QR-003, FR-020 to FR-026). It uses Robolectric with
   `createComposeRule()` and covers:
   - **(1) Cone geometry from inputs**: build `HomeScreenState.Guidance` by running an uncertainty, distance and
     heading fixture, derived from constants, through `GuidanceCalculator.compute` and
@@ -579,37 +579,37 @@ semantics in `GuidanceDisplayTest`. Advance the fake clock past the staleness ti
     it.
   - The `PERSON_ICON` and `CAR_ICON` nodes exist, with the content descriptions "You" and "Your car".
   - The cone node has no centerline child (FR-023).
-- [ ] T062 [P] [US2] Write `AT/ui/GuidanceRecompositionTest.kt` (FR-027). It renders `HomeScreen` and pushes
+- [X] T062 [P] [US2] Write `AT/ui/GuidanceRecompositionTest.kt` (FR-027). It renders `HomeScreen` and pushes
   100 successive `Guidance` states that differ only in the display bearing. Using `SideEffect` counters in
   test-only wrappers, it asserts that the cone recomposes exactly once per state, and that the status and arrival
   composables never recompose.
-- [ ] T063 [P] [US2] Write `AT/GuidanceSessionObserverTest.kt` (FR-017, Constitution IV, research R2). It uses
+- [X] T063 [P] [US2] Write `AT/GuidanceSessionObserverTest.kt` (FR-017, Constitution IV, research R2). It uses
   Robolectric `ActivityScenario` under `TestCarFinderApplication`, and covers:
   - Moving `MainActivity` to STARTED calls `engine.setGuidanceVisible(true)` and `FakeHeadingSource.start()`.
   - Moving it to STOPPED calls `setGuidanceVisible(false)` and `stop()`.
   - A new presenter state reaches `HomeScreen` while STARTED.
-- [ ] T064 [P] [US2] Write `AT/ui/ComposeOnlySourceScanTest.kt` (QR-008). It asserts that `app/src/main` has no
+- [X] T064 [P] [US2] Write `AT/ui/ComposeOnlySourceScanTest.kt` (QR-008). It asserts that `app/src/main` has no
   `AndroidView(`, no `setContentView(`, no `import android.widget.`, no `import android.view.View` in `ui/`, and
   that `app/src/main/res/layout/` does not exist. It also asserts that `app/src/main` contains no `synthetic`,
   no `InMemoryParkingStore`, and no `shared.testing` imports, so benchmark and test fakes never ship in release.
 
 ### Implementation for User Story 2
 
-- [ ] T065 [P] [US2] Implement `SC/guidance/Uncertainty.kt` (FR-019) and `SC/guidance/GuidanceCalculator.kt`
+- [X] T065 [P] [US2] Implement `SC/guidance/Uncertainty.kt` (FR-019) and `SC/guidance/GuidanceCalculator.kt`
   (FR-020, FR-021, FR-025, FR-026) per the shared-domain-api contract. It includes `DistanceDisplay(value: Double,
   unit: DistanceUnit, text: String)`, with `enum DistanceUnit { FEET, MILES }`. Formatting uses integer
   arithmetic only (research R9). `compute()` returns a `GuidanceState` with every data-model field except
   `isArrived`, which is added in US3 (T082). This makes T053 pass.
-- [ ] T066 [P] [US2] Implement `SC/guidance/ConeGeometry.kt`, which holds `Point(x, y)`, `ConeGeometry(apex,
+- [X] T066 [P] [US2] Implement `SC/guidance/ConeGeometry.kt`, which holds `Point(x, y)`, `ConeGeometry(apex,
   carAnchor, sweepStartDegrees, sweepDegrees, halfAngleDegrees, displayBearingDegrees)` and `object
   ConeGeometryCalculator` (FR-022, FR-023, FR-024). It uses normalized coordinates: "The origin is the screen
   center, +y points up the screen, and 1.0 equals the minimum display dimension". This makes T054 pass.
-- [ ] T067 [P] [US2] Implement `SC/guidance/FixCurrency.kt` (FR-034). A fix is current iff
+- [X] T067 [P] [US2] Implement `SC/guidance/FixCurrency.kt` (FR-034). A fix is current iff
   `nowElapsedMillis − fix.elapsedRealtimeMillis ≤ FIX_STALENESS_TIMEOUT_MILLIS`. This makes T055 pass.
-- [ ] T068 [P] [US2] Implement `SC/guidance/DefaultViewSelector.kt`, which holds `enum ViewKind { DRIVING,
+- [X] T068 [P] [US2] Implement `SC/guidance/DefaultViewSelector.kt`, which holds `enum ViewKind { DRIVING,
   UNAVAILABLE, PARKING, GUIDANCE }` and `select(lifecycle, guidanceAvailable)` in exactly FR-016's priority order
   (FR-016, FR-031). This makes T056 pass.
-- [ ] T069 [US2] Create `SC/engine/HomeScreenState.kt`, the sealed interface from data-model (`Driving`,
+- [X] T069 [US2] Create `SC/engine/HomeScreenState.kt`, the sealed interface from data-model (`Driving`,
   `Unavailable`, `Parking`, and `Guidance(cone, distance, isArrived, isArrivalPromptVisible)`), all
   `@Immutable`-friendly data classes and objects. Then implement `SC/engine/HomeScreenPresenter.kt` (FR-016,
   FR-017, FR-027, FR-031, FR-034, QR-009):
@@ -623,9 +623,9 @@ semantics in `GuidanceDisplayTest`. Advance the fake clock past the staleness ti
   - For now `isArrived` and `isArrivalPromptVisible` are `false`, until US3.
 
   This makes T057 pass. It depends on T065 to T068.
-- [ ] T070 [US2] Update `SC/engine/ParkingEngine.kt` so that `GuidanceVisibility` inputs select the `GUIDANCE`
+- [X] T070 [US2] Update `SC/engine/ParkingEngine.kt` so that `GuidanceVisibility` inputs select the `GUIDANCE`
   profile while PARKED and visible, and `IDLE_WATCH` otherwise (research R2). This makes T058 pass.
-- [ ] T071 [P] [US2] Implement `SA/HeadingMath.kt`, a pure object built on `SensorManager.getRotationMatrixFromVector`,
+- [X] T071 [P] [US2] Implement `SA/HeadingMath.kt`, a pure object built on `SensorManager.getRotationMatrixFromVector`,
   `remapCoordinateSystem` per display rotation, `getOrientation`, the declination added, and normalization to
   `[0, 360)`. Also implement `SA/SensorPort.kt` and `SA/RotationVectorHeadingSource.kt`:
   - It uses `TYPE_ROTATION_VECTOR`, falling back to `TYPE_GEOMAGNETIC_ROTATION_VECTOR`, at `SENSOR_DELAY_UI`.
@@ -635,13 +635,13 @@ semantics in `GuidanceDisplayTest`. Advance the fake clock past the staleness ti
   - The display rotation comes from `Context.display.rotation`.
 
   This covers FR-021 and FR-031 and makes T059 and T060 pass.
-- [ ] T072 [US2] Update `SA/PlatformAdapters.android.kt` to wire `RotationVectorHeadingSource` in place of
+- [X] T072 [US2] Update `SA/PlatformAdapters.android.kt` to wire `RotationVectorHeadingSource` in place of
   `NoHeadingSource`. Delete `NoHeadingSource` if nothing else uses it.
-- [ ] T073 [P] [US2] Create `AM/ui/GuidanceSemantics.kt`. It holds the `object TestTags` with every tag listed in
+- [X] T073 [P] [US2] Create `AM/ui/GuidanceSemantics.kt`. It holds the `object TestTags` with every tag listed in
   the guidance-ui contract, and the custom `SemanticsPropertyKey<Double>`s `ConeHalfAngleDegrees` and
   `ConeDisplayBearingDegrees`, plus `SemanticsPropertyKey<Dp>` `ConeDrawSize`, each with a `SemanticsPropertyReceiver`
   extension setter.
-- [ ] T074 [US2] Implement `AM/ui/GuidanceDisplay.kt` (FR-020 to FR-025, FR-027, QR-008, QR-009). It is a
+- [X] T074 [US2] Implement `AM/ui/GuidanceDisplay.kt` (FR-020 to FR-025, FR-027, QR-008, QR-009). It is a
   stateless `@Composable fun GuidanceDisplay(state: HomeScreenState.Guidance, onArrivalAnswered: (Boolean) ->
   Unit)`:
   - A `BoxWithConstraints` sets `minDim = min(maxWidth, maxHeight)` and holds a centered `minDim × minDim`
@@ -656,7 +656,7 @@ semantics in `GuidanceDisplayTest`. Advance the fake clock past the staleness ti
   - There is no allocation inside the draw lambda.
 
   This makes T061 pass.
-- [ ] T075 [US2] Implement `AM/ui/HomeScreen.kt` and `AM/ui/StatusMessage.kt`:
+- [X] T075 [US2] Implement `AM/ui/HomeScreen.kt` and `AM/ui/StatusMessage.kt`:
   - `HomeScreen(state, onArrivalAnswered)` is a pure `when(state)`. `Guidance` renders `GuidanceDisplay`, and
     `Unavailable` renders `StatusMessage(stringResource(R.string.status_unavailable))`.
   - The `Driving` and `Parking` branches render `StatusMessage` with their resources, which are added in US4
@@ -665,7 +665,7 @@ semantics in `GuidanceDisplayTest`. Advance the fake clock past the staleness ti
   - Add `status_unavailable` = `Parked location unavailable.` to `app/src/main/res/values/strings.xml`.
 
   This covers FR-016, FR-031 and QR-008.
-- [ ] T076 [US2] Create `AM/GuidanceSessionObserver.kt`, a `DefaultLifecycleObserver`. Its `onStart` calls
+- [X] T076 [US2] Create `AM/GuidanceSessionObserver.kt`, a `DefaultLifecycleObserver`. Its `onStart` calls
   `engine.setGuidanceVisible(true)` and `heading.start()`, and its `onStop` calls `setGuidanceVisible(false)` and
   `heading.stop()`. Add a `HomeScreenPresenter` to `CarFinderApplication`. Then update `AM/MainActivity.kt`:
   - Register the observer.
@@ -676,7 +676,7 @@ semantics in `GuidanceDisplayTest`. Advance the fake clock past the staleness ti
     screen, with no navigation.
 
   No Composable collects flows or runs side effects (FR-017, QR-009, Constitution IV). This makes T063 pass.
-- [ ] T077 [US2] Run `.\gradlew.bat :shared:allTests :app:testDebugUnitTest`. All tests from US1 and US2 must
+- [X] T077 [US2] Run `.\gradlew.bat :shared:allTests :app:testDebugUnitTest`. All tests from US1 and US2 must
   pass, and the traceability report must show FR-016, FR-017, FR-019 to FR-027, FR-031, FR-034, QR-003 (partial),
   QR-008 and QR-009 traced.
 
@@ -696,22 +696,22 @@ closes, the state is PARKED, and the store is unchanged.
 
 ### Tests for User Story 3 ⚠️ (write first, must fail)
 
-- [ ] T078 [P] [US3] Write `ST/guidance/ArrivalTest.kt` (FR-028, SC-009). It covers:
+- [X] T078 [P] [US3] Write `ST/guidance/ArrivalTest.kt` (FR-028, SC-009). It covers:
   - `isArrived` is true at exactly `ARRIVAL_HALF_ANGLE_DEGREES` and false just below it.
   - It is true whenever uncertainty ≥ distance, and false when uncertainty < distance, checked with parameterized
     pairs.
   - It is true at distance 0.
-- [ ] T079 [P] [US3] Write `ST/guidance/ArrivalPromptTrackerTest.kt` (FR-028, FR-029). It covers:
+- [X] T079 [P] [US3] Write `ST/guidance/ArrivalPromptTrackerTest.kt` (FR-028, FR-029). It covers:
   - Armed changes to Prompting when `isArrived` becomes true.
   - Answering changes Prompting to Dismissed.
   - While Dismissed and `isArrived` is still true, the prompt is not shown again.
   - Dismissed changes to Armed only when `isArrived` becomes false, after which the prompt shows again on the
     next arrival.
-- [ ] T080 [P] [US3] Write `ST/engine/HomeScreenPresenterArrivalTest.kt` (FR-028, FR-029). It covers:
+- [X] T080 [P] [US3] Write `ST/engine/HomeScreenPresenterArrivalTest.kt` (FR-028, FR-029). It covers:
   - At the threshold, `Guidance.isArrived` and `isArrivalPromptVisible` are true.
   - `onArrivalAnswered(true)` and `onArrivalAnswered(false)` each hide the prompt.
   - Engine `lifecycle == PARKED`, and `InMemoryParkingStore.writes` did not change after answering.
-- [ ] T081 [P] [US3] Write `AT/ui/ArrivalDisplayTest.kt` (QR-003, FR-028, FR-029). It covers:
+- [X] T081 [P] [US3] Write `AT/ui/ArrivalDisplayTest.kt` (QR-003, FR-028, FR-029). It covers:
   - With `isArrived` and the prompt visible, `GUIDANCE_CONE`, `PERSON_ICON`, `CAR_ICON` and `DISTANCE_TEXT` do not
     exist (FR-028), and `ARRIVAL_MESSAGE` reads "You have arrived" and `ARRIVAL_PROMPT` reads "Do you see your car?".
   - Clicking `ARRIVAL_YES` invokes the callback with `true`, and `ARRIVAL_NO` invokes it with `false`.
@@ -720,16 +720,16 @@ closes, the state is PARKED, and the store is unchanged.
 
 ### Implementation for User Story 3
 
-- [ ] T082 [US3] Add `isArrived(halfAngleDegrees)` = `halfAngleDegrees >= ARRIVAL_HALF_ANGLE_DEGREES` to
+- [X] T082 [US3] Add `isArrived(halfAngleDegrees)` = `halfAngleDegrees >= ARRIVAL_HALF_ANGLE_DEGREES` to
   `SC/guidance/GuidanceCalculator.kt`, and populate `GuidanceState.isArrived` in `compute()` (FR-028). This makes
   T078 pass.
-- [ ] T083 [P] [US3] Implement `SC/guidance/ArrivalPromptTracker.kt` as a state machine `Armed → Prompting →
+- [X] T083 [P] [US3] Implement `SC/guidance/ArrivalPromptTracker.kt` as a state machine `Armed → Prompting →
   Dismissed` with `onArrivedChanged(isArrived)`, `onAnswered()` and `isPromptVisible`. It holds no reference to
   the engine or the store (FR-028, FR-029). This makes T079 pass.
-- [ ] T084 [US3] Integrate the tracker into `SC/engine/HomeScreenPresenter.kt`. `Guidance.isArrived` and
+- [X] T084 [US3] Integrate the tracker into `SC/engine/HomeScreenPresenter.kt`. `Guidance.isArrived` and
   `isArrivalPromptVisible` come from the tracker, and `onArrivalAnswered(sawCar)` calls `tracker.onAnswered()`
   only and never touches the engine or the store (FR-029). This makes T080 pass.
-- [ ] T085 [US3] Update `AM/ui/GuidanceDisplay.kt`. When `isArrived`, it does not compose the cone, the icons or
+- [X] T085 [US3] Update `AM/ui/GuidanceDisplay.kt`. When `isArrived`, it does not compose the cone, the icons or
   the distance text (FR-028). It shows `Text(stringResource(R.string.arrival_message))` tagged `ARRIVAL_MESSAGE`.
   When `isArrivalPromptVisible`, it shows the prompt text tagged `ARRIVAL_PROMPT` with Yes and No `Button`s,
   tagged `ARRIVAL_YES` and `ARRIVAL_NO`, which call `onArrivalAnswered(true/false)`. Add the strings
@@ -751,20 +751,20 @@ variant. Assert the exact status strings through Compose semantics.
 
 ### Tests for User Story 4 ⚠️ (write first, must fail)
 
-- [ ] T086 [P] [US4] Write `AT/ui/StatusMessagesTest.kt` (QR-003, FR-016, FR-017). It covers:
+- [X] T086 [P] [US4] Write `AT/ui/StatusMessagesTest.kt` (QR-003, FR-016, FR-017). It covers:
   - For `HomeScreenState.Driving`, `STATUS_MESSAGE` has exactly "Driving - Waiting to Park.".
   - For `Unavailable`, it has exactly "Parked location unavailable.".
   - For `Parking`, it has exactly "Sensing you will be Parking Soon.".
   - In each case `GUIDANCE_CONE` does not exist.
   - Use `assertTextEquals` so that wording, capitalization and punctuation are exact.
-- [ ] T087 [P] [US4] Write `ST/engine/HomeScreenPresenterStatusTest.kt` (FR-016, US4 acceptance scenarios 1 to 5).
+- [X] T087 [P] [US4] Write `ST/engine/HomeScreenPresenterStatusTest.kt` (FR-016, US4 acceptance scenarios 1 to 5).
   It covers:
   - Engine DRIVING, including the first drive after a fresh install, gives `Driving`.
   - FINDING, including a fresh install, gives `Unavailable`.
   - PARKING gives `Parking`.
   - PARKED with guidance available gives `Guidance`.
   - PARKED with guidance not available gives `Unavailable`.
-- [ ] T088 [P] [US4] Write `AT/MainActivityLaunchTest.kt` (FR-017, SC-006). It uses Robolectric
+- [X] T088 [P] [US4] Write `AT/MainActivityLaunchTest.kt` (FR-017, SC-006). It uses Robolectric
   `ActivityScenario.launch(MainActivity::class.java)`, with location permissions granted through
   `ShadowApplication.grantPermissions` and `TestCarFinderApplication` seeded to FINDING through
   `InMemoryParkingStore`. With no user interaction, the `STATUS_MESSAGE` node must display "Parked location
@@ -774,10 +774,10 @@ variant. Assert the exact status strings through Compose semantics.
 
 ### Implementation for User Story 4
 
-- [ ] T089 [US4] Add `status_driving` = `Driving - Waiting to Park.` and `status_parking` = `Sensing you will be
+- [X] T089 [US4] Add `status_driving` = `Driving - Waiting to Park.` and `status_parking` = `Sensing you will be
   Parking Soon.` to `app/src/main/res/values/strings.xml`, with the exact wording from FR-016. Complete the
   `Driving` and `Parking` branches in `AM/ui/HomeScreen.kt` using `StatusMessage`. This makes T086 pass.
-- [ ] T090 [US4] Verify that `SC/engine/HomeScreenPresenter.kt` maps every `LifecycleState` through
+- [X] T090 [US4] Verify that `SC/engine/HomeScreenPresenter.kt` maps every `LifecycleState` through
   `DefaultViewSelector`, and adjust it if T087 fails. Also confirm that the notification text in
   `AM/service/DetectionNotification.kt` uses the same three status strings, for consistency (FR-016). This makes
   T087 pass.
@@ -798,14 +798,14 @@ slow readings and assert that PARKED is kept.
 
 ### Tests for User Story 5 ⚠️ (write first, must fail)
 
-- [ ] T091 [P] [US5] Write `ST/domain/ParkingStateMachineDriveAwayTest.kt` (FR-003, FR-009, FR-015, FR-032). It
+- [X] T091 [P] [US5] Write `ST/domain/ParkingStateMachineDriveAwayTest.kt` (FR-003, FR-009, FR-015, FR-032). It
   covers:
   - PARKED plus a filtered speed above `DRIVING_SPEED_THRESHOLD_MPH` gives DRIVING with `parkedLocation == null`
     and `persist == true`.
   - PARKED with a single raw spike stays PARKED with the location kept.
   - PARKED with dead-zone or slow speeds stays PARKED.
   - PARKED never goes to FINDING and never to PARKING.
-- [ ] T092 [P] [US5] Write `ST/engine/ParkingEngineDriveAwayTest.kt` (FR-013, FR-015, FR-033, SC-005). It covers:
+- [X] T092 [P] [US5] Write `ST/engine/ParkingEngineDriveAwayTest.kt` (FR-013, FR-015, FR-033, SC-005). It covers:
   - Two full park cycles (PARKED, then DRIVING, then PARKING, then PARKED at a second site) leave exactly one
     Parked Location in the store, equal to the second centroid (FR-013).
   - A seeded PARKED store followed by fast readings with no UI (guidance never visible) gives a store record of
@@ -813,7 +813,7 @@ slow readings and assert that PARKED is kept.
   - Re-creating the engine over the store gives a state other than PARKED and no location.
   - `ActivityInVehicle` while in `IDLE_WATCH` upgrades the profile to `DRIVING` without changing the lifecycle,
     and the next lifecycle change resets the upgrade (research R2).
-- [ ] T093 [P] [US5] Write `SAT/ActivityTransitionSourceTest.kt` (QR-004, research R2). It uses a Robolectric
+- [X] T093 [P] [US5] Write `SAT/ActivityTransitionSourceTest.kt` (QR-004, research R2). It uses a Robolectric
   `FakeActivityPort` and covers:
   - An `IN_VEHICLE` ENTER transition intent emits once.
   - An EXIT or any other activity emits nothing.
@@ -821,10 +821,10 @@ slow readings and assert that PARKED is kept.
 
 ### Implementation for User Story 5
 
-- [ ] T094 [US5] Complete the PARKED branch in `SC/domain/ParkingStateMachine.kt` (FR-003, FR-009, FR-015). When
+- [X] T094 [US5] Complete the PARKED branch in `SC/domain/ParkingStateMachine.kt` (FR-003, FR-009, FR-015). When
   PARKED and the filtered `v > DRIVING_SPEED_THRESHOLD_MPH`, go to DRIVING with `parkedLocation = null` and
   `persist = true`. Remove the US1 placeholder marker. This makes T091 pass.
-- [ ] T095 [P] [US5] Implement `SA/ActivityPort.kt` and `SA/ActivityTransitionSource.kt` (research R2):
+- [X] T095 [P] [US5] Implement `SA/ActivityPort.kt` and `SA/ActivityTransitionSource.kt` (research R2):
   - It uses `ActivityRecognition.getClient(context).requestActivityTransitionUpdates` for `IN_VEHICLE`
     `ACTIVITY_TRANSITION_ENTER`, with a mutable `PendingIntent` to an internal `BroadcastReceiver`.
   - It parses the intent with `ActivityTransitionResult.extractResult`.
@@ -833,7 +833,7 @@ slow readings and assert that PARKED is kept.
 
   Register the receiver in `app/src/main/AndroidManifest.xml` with `android:exported="false"`. This makes T093
   pass.
-- [ ] T096 [US5] Update `SA/PlatformAdapters.android.kt` to wire `ActivityTransitionSource` in place of
+- [X] T096 [US5] Update `SA/PlatformAdapters.android.kt` to wire `ActivityTransitionSource` in place of
   `NoActivitySignalSource`. Update `SC/engine/ParkingEngine.kt` so that `ActivityInVehicle` upgrades
   `IDLE_WATCH` to `DRIVING` until the next lifecycle transition, and never changes the lifecycle (research R2).
   This makes T092 pass.
@@ -846,14 +846,14 @@ slow readings and assert that PARKED is kept.
 
 **Purpose**: Whole-feature verification, documentation and the traceability gate.
 
-- [ ] T097 [P] Write `ST/engine/FullLifecycleReplayTest.kt` (FR-001, FR-009, SC-001, SC-002, SC-005, SC-009,
+- [X] T097 [P] Write `ST/engine/FullLifecycleReplayTest.kt` (FR-001, FR-009, SC-001, SC-002, SC-005, SC-009,
   SC-010). It replays FINDING → DRIVING → PARKING → PARKED, then guidance, then arrival, then an answer, then
   drive-away → DRIVING, through the engine and the presenter with fakes. It asserts every intermediate
   `HomeScreenState` and every store record.
-- [ ] T098 [P] Write `ST/engine/ConcurrencyTest.kt` (research R7). It sends interleaved location, activity and
+- [X] T098 [P] Write `ST/engine/ConcurrencyTest.kt` (research R7). It sends interleaved location, activity and
   visibility inputs from multiple coroutines, and asserts that the transitions are serialized and the FR-018
   invariant holds after each emission.
-- [ ] T099 [P] Create `README.md` at the repository root, covering:
+- [X] T099 [P] Create `README.md` at the repository root, covering:
   - What Car Finder does.
   - The prerequisites (JDK 17+, Android SDK, PowerShell 5.1+, Pester 5).
   - Build commands (`gradlew assembleDebug`) and test commands (the tasks from quickstart §2), and how to run the
@@ -880,13 +880,13 @@ slow readings and assert that PARKED is kept.
     the placeholder.
   - It runs on a connected device with `.\gradlew.bat :benchmark:connectedBenchmarkAndroidTest`. It is
     automated, but not part of CI at MVP (Constitution II).
-- [ ] T101 Review every Composable in `AM/ui/` and `AM/MainActivity.kt` for local `remember { mutableStateOf }`
+- [X] T101 Review every Composable in `AM/ui/` and `AM/MainActivity.kt` for local `remember { mutableStateOf }`
   holding domain data, and for any Composable that collects flows or runs side effects (Constitution IV). The
   Activity-held `uiState` in `MainActivity` (T076) is the approved hoisting boundary and is exempt: it only
   mirrors `presenter.state` and is never computed there. Portability of `SC/` is enforced automatically by
   `CommonMainPortabilityScanTest`. Review test files for hard-coded `3` used as a window or sample count
   (QR-002; T012 cannot catch this). Fix any finding at its source.
-- [ ] T102 Run the full suite: `.\gradlew.bat :shared:allTests :app:testDebugUnitTest :app:lintDebug` and
+- [X] T102 Run the full suite: `.\gradlew.bat :shared:allTests :app:testDebugUnitTest :app:lintDebug` and
   `Invoke-Pester tools\traceability\tests`. Everything must be green, and lint must report no errors.
 - [ ] T103 Run `.\tools\traceability\Get-TraceabilityReport.ps1 -FailOnGaps` and commit the generated
   `specs/002-park-detect-guidance/traceability.md`. Every FR and QR must be `TRACED`, with QR-005 to QR-007 and
@@ -896,6 +896,35 @@ slow readings and assert that PARKED is kept.
   (V1 to V7) on a physical API 34+ phone. Record the results, including the V6 boot-start outcome and the V7
   battery figure, in `specs/002-park-detect-guidance/validation-results.md`. This is supplementary evidence only
   and does not replace the automated tests (Constitution III).
+
+---
+
+## Phase 9: Remediation — UI as read-only engine observer (post-implementation)
+
+**Purpose**: Correct an implementation deviation from plan.md/research R7 ("the service starts the engine, and the
+Activity observes it"). During US2, `MainActivity` was changed to call `engine.start()`, which let the UI start
+location sampling, activity recognition and the actor loop. Logged as ledger RR1-010.
+
+- [X] T105 Add a read-only `suspend fun restore()` and `val isRunning` to `SC/engine/ParkingEngine.kt`.
+  `restore()` reads the store, normalizes, and publishes lifecycle and location through `state`; it never starts
+  the actor, location sampling or activity recognition, never writes the store, and has no effect while running.
+  Visibility and activity inputs queued before the engine has restored only record their flags, so the blank
+  initial snapshot is never published over the restored state (FR-014, FR-018).
+- [X] T106 Change `AM/MainActivity.kt` to call `engine.restore()` instead of `engine.start()`. Mark
+  `AM/service/ParkingDetectionService.kt` as the only production call site of `engine.start()` (FR-033).
+- [X] T107 [P] Write `ST/engine/ParkingEngineRestoreTest.kt`: restore shows persisted state without starting
+  anything or writing the store (including a record that needs normalizing); visibility set before start starts
+  nothing and is honored once started, with no flicker to FINDING; restore after start is a no-op.
+- [X] T108 [P] Write `AT/MainActivityReadOnlyObserverTest.kt` (launching MainActivity restores state but starts
+  no sampling, subscription or actor, and writes nothing), `AT/EngineSingletonTest.kt` (MainActivity and
+  ParkingDetectionService resolve to the identical `ParkingEngine`, and the service-started engine feeds the
+  Activity's screen) and `AT/EngineStartOwnershipScanTest.kt` (`engine.start()` appears only in the service).
+  Update `AT/GuidanceSessionObserverTest.kt` to start the engine explicitly, as the service would.
+- [X] T109 Update `contracts/shared-domain-api.md`, `contracts/platform-adapters.md` and research R7 to state
+  the entry-point ownership, and log ledger entry RR1-010.
+
+**Checkpoint**: 174 tests green. With the old `engine.start()` call temporarily restored in MainActivity, the
+three new app tests fail, confirming they guard the regression.
 
 ---
 

@@ -36,7 +36,7 @@ The same object also holds the conversion factors: `METERS_PER_SECOND_TO_MPH`, `
 | `DRIVING_SAMPLING_INTERVAL_MILLIS` | 5_000 | Location interval in DRIVING |
 | `GUIDANCE_SAMPLING_INTERVAL_MILLIS` | 1_000 | Location interval while guidance is visible |
 | `AVAILABILITY_RECHECK_INTERVAL_MILLIS` | 500 | Presenter tick that re-checks fix and heading currency (FR-034, SC-010) |
-| `CONE_LENGTH_FRACTION` | 0.8 | Cone length as a fraction of the minimum display dimension |
+| `CONE_LENGTH_FRACTION` | 0.65 | Cone length as a fraction of the minimum display dimension. At most 0.678, so the full sector fits in the minimum-dimension square up to the 45° arrival angle |
 
 ## Entities
 
