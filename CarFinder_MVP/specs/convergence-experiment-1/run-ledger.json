@@ -190,6 +190,18 @@
       "artifact_layer_target": "plan",
       "verified_by": "191/191 Gradle tests green (161 :shared, 30 :app), Pester 10/10, traceability 45 requirements / 0 untraced / 0 orphaned with -FailOnGaps, lintDebug 0 errors (18 warnings), plus mutation check, Claude Code, 2026-10-02",
       "status": "Implemented, uncommitted; pending owner review and device re-test (V8, V9)"
+    },
+    {
+      "id": "RR1-014",
+      "origin": "Seed-hardening-v5",
+      "checklist_ref": null,
+      "severity": "MEDIUM",
+      "description": "Seed-hardening pass (car-finder-mvp-requirements-v5.md) for the Run 2 convergence experiment folded forward all eleven correctness-relevant divergences from the 001-vs-002 side-by-side comparison (convergence-efficacy-tracker.md), plus a correction to REQ-PARK-06 itself based on RR1-013's real implementation experience: v4 said each recovery correction RESETS the recovery window from its own timestamp (to cover a multi-step search for a spot); v5 changes this to ANCHOR the window to the ORIGINAL PARKED declaration, never resetting it, because a resetting window cannot be distinguished from the exact walk-away failure mode it exists to prevent, no matter how worded. This matches what RR1-013's implementation actually built (ParkedLocation.capturedAtEpochMillis is preserved across a correction), so no code change is needed for this part. SEPARATELY: v5 also confirmed PARKED_RECOVERY_WINDOW = 180s (3 minutes, per v4's original value) rather than the 120s RR1-013's implementation used as its own estimate (RR1-013 could not find v4's value in its repo at implementation time). This means CarFinder_MVP_rerun's PARKED_RECOVERY_WINDOW_MILLIS constant (currently 120_000L) is now out of spec against car-finder-mvp-requirements-v5.md Section 4. Owner decision 2026-10-02: leave the Run 1/002 code as-is for now (120s) rather than patch it -- Run 1 is being treated as a closed, scored data point for the convergence experiment, not a live target for further correction; v5's 180s value governs Run 2's fresh generation instead. If Run 1's app is ever used beyond the experiment (e.g. side-loaded for real use), this discrepancy should be revisited.",
+      "req_ref": "REQ-PARK-06 (v5) / FR-035 (002, Run 1)",
+      "hitl_category": "Requirement conflict",
+      "artifact_layer_target": "spec",
+      "verified_by": "Direct reading of car-finder-mvp-requirements-v5.md Section 4 against CarFinder_MVP_rerun/.../CarFinderConstants.kt (PARKED_RECOVERY_WINDOW_MILLIS = 120_000L), Claude Sonnet 5 (Overseer), 2026-10-02",
+      "status": "Documented discrepancy; owner elected not to patch Run 1's code; v5 governs Run 2"
     }
   ]
 }
