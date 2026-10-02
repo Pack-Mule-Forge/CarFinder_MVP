@@ -4,6 +4,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ApplicationProvider
+import com.packmuleforge.carfindermvp.shared.domain.CarFinderConstants
 import com.packmuleforge.carfindermvp.shared.domain.HeadingReading
 import com.packmuleforge.carfindermvp.shared.domain.LifecycleState
 import com.packmuleforge.carfindermvp.shared.domain.ParkedLocation
@@ -39,6 +40,8 @@ class GuidanceSessionObserverTest {
             ),
         )
         app.fakes.monotonicClock.now = 1_000_000L
+        // Long parked: the recovery window (FR-035), which holds the PARKING rate, has lapsed.
+        app.fakes.wallClock.now = CarFinderConstants.PARKED_RECOVERY_WINDOW_MILLIS + 1
     }
 
     @get:Rule

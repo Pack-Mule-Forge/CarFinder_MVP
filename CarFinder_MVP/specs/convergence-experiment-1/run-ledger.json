@@ -136,12 +136,12 @@
       "origin": "Novel",
       "checklist_ref": null,
       "severity": "HIGH",
-      "description": "speckit.analyze (002, finding F1) caught a genuine self-contradiction in the fresh spec: FR-033 claimed unconditional restart-after-reboot, while an edge case (added during the U3 fix) said foreground-only location permission would prevent that. Claude Code's research (citing developer.android.com's foreground-service background-start-restriction page) correctly distinguished two separate Android mechanisms: boot IS exempted from the general background-service-launch restriction, but camera/location/microphone-typed foreground services carry a SEPARATE while-in-use permission check that boot is NOT exempted from, meaning a location-type foreground service started from BOOT_COMPLETED with only foreground permission granted likely throws SecurityException on API 34+. Claude initially pushed back with an incomplete reading of the platform restrictions (conflating the two mechanisms) and was corrected by Claude Code's more careful, well-cited research -- a case of the fresh-run agent being right and the reviewing agent being wrong, caught because Claude Code held its ground with evidence rather than deferring. Resolved via Option 1: FR-033 now states the honest degraded behavior under foreground-only permission (detection runs while the service is alive, resumes on next app open, notification nudges toward 'Allow all the time'), pending quickstart V6 (real device, API 34+, reboot while PARKED with foreground-only permission) to confirm either way. NOTABLE: the shipped 001 app's ServiceBootReceiver checks only ACCESS_FINE_LOCATION before attempting restart, not background location -- if this reading of the platform restriction holds, the shipped, 'real-world-tested' app may carry the same latent, never-actually-exercised bug. Gary plans to run V6 on both builds.",
+      "description": "speckit.analyze (002, finding F1) caught a genuine self-contradiction in the fresh spec: FR-033 claimed unconditional restart-after-reboot, while an edge case (added during the U3 fix) said foreground-only location permission would prevent that. Claude Code's research (citing developer.android.com's foreground-service background-start-restriction page) correctly distinguished two separate Android mechanisms: boot IS exempted from the general background-service-launch restriction, but camera/location/microphone-typed foreground services carry a SEPARATE while-in-use permission check that boot is NOT exempted from, meaning a location-type foreground service started from BOOT_COMPLETED with only foreground permission granted likely throws SecurityException on API 34+. Claude initially pushed back with an incomplete reading of the platform restrictions (conflating the two mechanisms) and was corrected by Claude Code's more careful, well-cited research -- a case of the fresh-run agent being right and the reviewing agent being wrong, caught because Claude Code held its ground with evidence rather than deferring. Resolved via Option 1: FR-033 now states the honest degraded behavior under foreground-only permission (detection runs while the service is alive, resumes on next app open, notification nudges toward 'Allow all the time'), pending quickstart V6 (real device, API 34+, reboot while PARKED with foreground-only permission) to confirm either way. NOTABLE: the shipped 001 app's ServiceBootReceiver checks only ACCESS_FINE_LOCATION before attempting restart, not background location -- if this reading of the platform restriction holds, the shipped, 'real-world-tested' app may carry the same latent, never-actually-exercised bug. Gary plans to run V6 on both builds. UPDATE (V6 run on the 002 build, real device, 2026-10-02; details in RR1-011): confirmed on both sides. With only 'While using the app' granted, no detection resumed after reboot and the notification asked for 'Allow all the time', exactly as FR-033's degraded behavior states. With 'Allow all the time' granted, the notification was restored within seconds of boot. The research R5 reading of the platform restriction held. The V6 result for the shipped 001 build is not recorded in this update.",
       "req_ref": "FR-033 (002) / FR-046 (001)",
       "hitl_category": "Requirement conflict",
       "artifact_layer_target": "spec",
-      "verified_by": "Claude Code's cited research (developer.android.com); pending Gary's V6 device test on both builds, 2026-09-30",
-      "status": "Resolved honestly, pending device confirmation (V6)"
+      "verified_by": "Claude Code's cited research (developer.android.com); confirmed by Gary's V6 device test on the 002 build (logcat), 2026-10-02",
+      "status": "Resolved, confirmed on device (V6, 002 build)"
     },
     {
       "id": "RR1-010",
@@ -154,6 +154,42 @@
       "artifact_layer_target": "plan",
       "verified_by": "174/174 tests green plus mutation check (old behavior fails 3 new tests), Claude Code, 2026-09-30",
       "status": "Resolved"
+    },
+    {
+      "id": "RR1-011",
+      "origin": "Novel",
+      "checklist_ref": null,
+      "severity": "LOW",
+      "description": "Real-world device validation of the 002 build (quickstart.md section 6), 2026-10-02. V1-V5 and V7: all passed as specified in quickstart.md. V6, 'While using the app' variant: passed exactly as specified -- after reboot no detection resumed, and a notification correctly asked for 'Allow all the time'. V6, 'Allow all the time' variant: passed -- the notification was restored within seconds of boot, confirmed via logcat (BootReceiver fired, the foreground-service start was allowed via BOOT_COMPLETED's temp-allowlist, the notification was posted, and there was no crash or cancel over a 3+ minute observation window). CAVEAT (the novel finding in this entry): initial testing of the 'Allow all the time' variant showed no notification at all. The difference was traced to Samsung's 'Auto Blocker' feature, which also blocks USB debugging and plausibly restricts background execution for sideloaded (non-Play-Store) apps specifically. This is likely a testing-environment artifact of sideloading rather than a defect that would affect users installing via the Play Store, but it is recorded because it is a real, reproducible interaction with this device and install method. V8 is logged separately as RR1-012.",
+      "req_ref": "FR-033 / FR-015; quickstart V1-V7; research R5",
+      "hitl_category": "none",
+      "artifact_layer_target": "plan",
+      "verified_by": "Gary's real-device testing (Samsung, sideloaded build), logcat for V6, 2026-10-02",
+      "status": "Passed (V1-V7); Auto Blocker caveat recorded, not a product defect"
+    },
+    {
+      "id": "RR1-012",
+      "origin": "Recurrence-of-CR-18",
+      "checklist_ref": null,
+      "severity": "HIGH",
+      "description": "Real-world test V8 (parking-lot creep scenario, reproducing CR-18 from the original 001 ledger): confirmed recurrence. A brief stop at a stoplight during ordinary driving -- not even the deliberate creep attempts -- triggered a premature PARKED declaration with immediate 'arrived' status. This is consistent with CR-18's predicted mechanism: three samples converging during a stop long enough to satisfy the convergence window, independent of vehicle speed. Deliberate creep attempts (4 tries) did not reproduce it, consistent with the bug depending on stop duration relative to the sample interval rather than on low speed alone. CR-18 was excluded from the convergence checklist as a real-world-only finding a fresh generation pass could not have caught, and the fresh 002 spec indeed carried no equivalent of REQ-PARK-06 until this test. Fix implemented as FR-035 (see RR1-013).",
+      "req_ref": "REQ-PARK-06 (001) / FR-007, FR-009 (002); now FR-035",
+      "hitl_category": "Requirement conflict",
+      "artifact_layer_target": "spec",
+      "verified_by": "Gary's real-world driving test (V8), 2026-10-02",
+      "status": "Confirmed recurrence; fix implemented as RR1-013, pending device re-test"
+    },
+    {
+      "id": "RR1-013",
+      "origin": "Recurrence-of-CR-18",
+      "checklist_ref": null,
+      "severity": "HIGH",
+      "description": "First implementation of REQ-PARK-06, the CR-18 owner decision of 2026-09-29 that had existed only as a requirement. Added to the 002 spec as FR-035 (plus SC-012, two US1 acceptance scenarios, edge cases, and the new FR-030 constant) and implemented test-first. Mechanism: while PARKED, readings keep being evaluated for convergence with no preceding DRIVING state required, and a new convergence silently replaces the Parked Location -- but only within PARKED_RECOVERY_WINDOW_MILLIS of the PARKED declaration. The unbounded-recovery risk (park, walk away, settle elsewhere) is guarded by construction: a corrected location keeps the original capturedAtEpochMillis, so the window is anchored to the declaration, cannot be extended by a chain of corrections, survives a process restart without a schema change, and fails closed if the wall clock reads earlier than the declaration. Not gated on activity recognition (deferred to production per the original decision). Plan-level choices made here and NOT in the original decision, for the owner to confirm: (1) window value 120 s -- the decision names the constant but car-finder-mvp-requirements-v4.md, which would give its value, is not in the repository; (2) recovery readings are thinned to at least 4/5 of the parking-sampling interval apart (TuningConstants.RECOVERY_MIN_SAMPLE_SPACING_MILLIS), because pairwise convergence ignores time and three 1 s guidance-rate readings converge at walking pace; (3) the engine holds the 5 s PARKING sampling profile during the window instead of the 20 s idle rate, otherwise a correction would need about 40 s stationary at the real spot. KNOWN LIMITS: this corrects a premature PARKED afterwards and does not prevent it, so the stoplight case observed in V8 still declares PARKED early (cleared by drive-away as before); a real spot reached after the window closes is not corrected; inside the window a user standing still near the car for about 10 s can move the location there. New tests: ParkingStateMachineRecoveryTest (11) and ParkingEngineRecoveryTest (6); four existing tests (in three files) that modelled a long-parked car with a zero wall clock were given a lapsed window, assertions unchanged. Mutation check: removing the upper time bound fails 11 tests. Not yet verified on a device (tasks.md T118: re-run V8, and new V9 walk-away check).",
+      "req_ref": "FR-035, FR-030, SC-012 (002); REQ-PARK-06 / CR-18 (001); research R13",
+      "hitl_category": "Requirement conflict",
+      "artifact_layer_target": "plan",
+      "verified_by": "191/191 Gradle tests green (161 :shared, 30 :app), Pester 10/10, traceability 45 requirements / 0 untraced / 0 orphaned with -FailOnGaps, lintDebug 0 errors (18 warnings), plus mutation check, Claude Code, 2026-10-02",
+      "status": "Implemented, uncommitted; pending owner review and device re-test (V8, V9)"
     }
   ]
 }

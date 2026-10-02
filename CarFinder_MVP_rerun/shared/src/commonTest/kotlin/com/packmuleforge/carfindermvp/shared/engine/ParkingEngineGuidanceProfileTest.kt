@@ -24,6 +24,8 @@ class ParkingEngineGuidanceProfileTest {
 
     private fun TestScope.engineWith(state: LifecycleState): Pair<ParkingEngine, FakePlatform> {
         val platform = FakePlatform()
+        // Long parked: the recovery window (FR-035), which holds the PARKING rate, has lapsed.
+        platform.wallClock.now = CarFinderConstants.PARKED_RECOVERY_WINDOW_MILLIS + 1
         val location = if (state == LifecycleState.PARKED) {
             ParkedLocation(Readings.BASE_LAT, Readings.BASE_LON, Readings.GOOD_ACCURACY_METERS, 0L)
         } else null

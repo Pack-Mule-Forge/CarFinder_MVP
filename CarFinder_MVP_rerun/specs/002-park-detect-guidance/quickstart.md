@@ -72,6 +72,8 @@ fakes. They need no hardware.
 | Fresh install, no drive | Slow or stationary readings | FINDING, and the store holds no location |
 | Drive-away | PARKED, then 3 or more fast readings | DRIVING, with no location in the store after an engine re-create |
 | Single spike | PARKED, then one fast reading among slow ones | PARKED is kept |
+| Brief stop, then the real spot (SC-012) | Drive, a converging stop, slow spread-out readings, then a second converging stop inside the parked-recovery window | PARKED throughout, and the stored location equals the second centroid with the original capture time |
+| Walk away and settle (SC-012) | PARKED, the clock advances past the parked-recovery window, then readings converge elsewhere | The stored location is unchanged |
 | Stale fix | PARKED with guidance showing, then the clock advances past the staleness timeout with no fix | `Unavailable` within one recheck tick, with lifecycle PARKED and the location kept |
 
 ## 5. Persistence survival (SC-004, FR-014)
@@ -97,4 +99,6 @@ Run this on an emulator or device. It is supplementary integration evidence, not
 | V4 | Rotate the phone between portrait and landscape | The cone keeps the same size and stays centered (FR-024) |
 | V5 | Walk to the car | "You have arrived" and "Do you see your car?" appear. Answering keeps the state PARKED. |
 | V6 | Reboot the phone while PARKED and do not open the app, then drive away | The notification returns after boot, and drive-away clears the location (FR-033, FR-015). If the boot start is blocked, record the gap as research R5 describes. Then repeat with **only** "While using the app" granted. Expected: no detection after reboot until the app is opened, and the notification asks for "Allow all the time" (spec Edge Cases). If detection does resume after reboot, record that, because it would disprove research R5. |
+| V8 | Parking-lot creep (CR-18): stop for about 15 s at a lot entrance or stop sign after driving, then creep to a space without exceeding the driving threshold, park, and stay at the car for about 15 s | PARKED may appear at the entrance stop. Within the parked-recovery window the location moves to the real space with no prompt, and guidance from a distance points at the real space (FR-035). Also record: whether a stoplight in ordinary driving still shows PARKED early (expected; cleared on drive-away), and whether a space reached after the window closed kept the entrance location (expected). |
+| V9 | Park normally, wait past the parked-recovery window, walk at least 50 m away and stand still for a minute | The Parked Location does not move (FR-035 bound) |
 | V7 | Over a day of normal use, check the battery screen | Car Finder's usage is reasonable, which is a judgment call per the constitution's "proportionate sensor use". Record the figure for later tuning of `IDLE_WATCH_SAMPLING_INTERVAL_MILLIS`. |

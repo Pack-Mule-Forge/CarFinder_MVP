@@ -928,6 +928,52 @@ three new app tests fail, confirming they guard the regression.
 
 ---
 
+## Phase 10: Bounded re-convergence recovery while PARKED (FR-035, post-device-test)
+
+**Purpose**: Implement the CR-18 owner decision (REQ-PARK-06 in the 001 ledger), which until now existed only as
+a requirement. Field check V8 on 2026-10-02 reproduced CR-18: a brief stop converged and PARKED was declared
+early. Logged in the run ledger as the V8 recurrence entry and the implementation entry.
+
+### Tests for FR-035 ⚠️ (write first, must fail)
+
+- [X] T110 [P] Write `ST/domain/ParkingStateMachineRecoveryTest.kt` (FR-035): a new convergence inside the
+  recovery window replaces the location with `from == to == PARKED` and `persist`; one after the window does not;
+  the boundary is inclusive at exactly `PARKED_RECOVERY_WINDOW_MILLIS`; a corrected location keeps
+  `capturedAtEpochMillis`, so a later convergence outside the original window does not correct again; partial
+  readings are discarded when the window closes; readings closer than `RECOVERY_MIN_SAMPLE_SPACING_MILLIS` are
+  thinned; spread readings and readings without accuracy do not correct; driving speed still drives away and
+  deletes the location; a wall clock earlier than the declaration does not correct.
+- [X] T111 [P] Write `ST/engine/ParkingEngineRecoveryTest.kt` (FR-035, SC-012): the brief-stop-then-creep replay
+  stores the real spot with nothing emitted on `transitions`; park, wait past the window, walk away and settle
+  keeps the location; the `PARKING` profile is held during the window and drops to `IDLE_WATCH` after it;
+  guidance visibility still selects `GUIDANCE`; an engine restored inside the window still recovers and one
+  restored after it does not.
+
+### Implementation for FR-035
+
+- [X] T112 Add `PARKED_RECOVERY_WINDOW_MILLIS` to `SC/domain/CarFinderConstants.kt` (FR-030) and
+  `RECOVERY_MIN_SAMPLE_SPACING_MILLIS` to `SC/domain/TuningConstants.kt`. Add the new FR-030 name and literal to
+  `SAT/ConstantsLiteralScanTest.kt`.
+- [X] T113 Add `ParkedLocation.isWithinRecoveryWindow(nowEpochMillis)` to `SC/domain/ParkedLocation.kt` and
+  `lastElapsedRealtimeMillis` to `SC/domain/ConvergenceWindow.kt` (FR-035).
+- [X] T114 Add the PARKED recovery branch to `SC/domain/ParkingStateMachine.kt` (FR-035): bounded by the window,
+  thinned, keeping the declaration time on a correction, after the drive-away check. It must not read the
+  activity signal.
+- [X] T115 Change `profileFor` in `SC/engine/ParkingEngine.kt` to request `PARKING` in PARKED while the recovery
+  window is open and guidance is not visible (FR-035).
+- [X] T116 Update the tests that modelled a long-parked car with a zero wall clock so that their recovery window
+  has lapsed: `ST/engine/ParkingEngineDriveAwayTest.kt`, `ST/engine/ParkingEngineGuidanceProfileTest.kt` and
+  `AT/GuidanceSessionObserverTest.kt`. Their assertions are unchanged.
+- [X] T117 Update spec.md (FR-035, FR-030, SC-012, scenarios, edge cases), plan.md, research R2/R8/R13,
+  data-model.md, `contracts/shared-domain-api.md` and quickstart (replay rows, V8, V9). Regenerate
+  `traceability.md` with `-FailOnGaps`, run the T102 gate, and log the ledger entries.
+- [ ] T118 Re-run field checks V8 and V9 from [quickstart.md](quickstart.md) §6 on the device with this build,
+  and confirm or adjust the 120 s value of `PARKED_RECOVERY_WINDOW_MILLIS`.
+
+**Checkpoint**: the full gate is green; see the ledger entry for the counts.
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
@@ -943,6 +989,7 @@ three new app tests fail, confirming they guard the regression.
   of US3.
 - **US5 (Phase 7)**: Depends only on US1 (T041, T042, T046). It can run in parallel with US2, US3 and US4.
 - **Polish (Phase 8)**: Depends on every story.
+- **Recovery (Phase 10)**: Depends on US1 (T040 to T042) and US5 (T094).
 
 ### Story graph
 
@@ -960,8 +1007,8 @@ Setup → Foundational → US1 ─┬─→ US2 ─┬─→ US3
 
 ### Same-file sequencing (these tasks are not parallel with each other)
 
-- `ParkingStateMachine.kt`: T041 → T094
-- `ParkingEngine.kt`: T042 → T070 → T096
+- `ParkingStateMachine.kt`: T041 → T094 → T114
+- `ParkingEngine.kt`: T042 → T070 → T096 → T105 → T115
 - `HomeScreenPresenter.kt`: T069 → T084 → T090
 - `GuidanceCalculator.kt`: T065 → T082
 - `GuidanceDisplay.kt`: T074 → T085

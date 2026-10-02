@@ -31,6 +31,7 @@ class ParkingEngineDriveAwayTest {
 
     private val window = CarFinderConstants.SPEED_FILTER_WINDOW_SIZE
     private val radius = CarFinderConstants.CONVERGENCE_RADIUS_METERS
+    private val pastRecoveryWindow = CarFinderConstants.PARKED_RECOVERY_WINDOW_MILLIS + 1
     private var road = 0
 
     private fun travel(mph: Double, n: Int = window) = List(n) {
@@ -97,6 +98,7 @@ class ParkingEngineDriveAwayTest {
     @Test
     fun inVehicleHint_upgradesIdleWatchToDriving_withoutChangingLifecycle_untilNextLifecycleChange() = runTest {
         val platform = FakePlatform(store = InMemoryParkingStore(seeded))
+        platform.wallClock.now = pastRecoveryWindow
         val engine = started(platform)
         assertEquals(SamplingProfile.IDLE_WATCH, platform.location.profileHistory.last())
 
@@ -108,6 +110,9 @@ class ParkingEngineDriveAwayTest {
         platform.emitAll(travel(Readings.PARKED_MPH))
         platform.emitAll(clusterAt(northMeters = radius * 900))
         assertEquals(LifecycleState.PARKED, engine.state.value.lifecycle)
+        // The new location's recovery window (FR-035) holds the PARKING rate; let it lapse to see the idle profile.
+        platform.wallClock.now += pastRecoveryWindow
+        platform.emitAll(clusterAt(northMeters = radius * 900).take(1))
         assertEquals(SamplingProfile.IDLE_WATCH, platform.location.profileHistory.last(), "hint must reset after a lifecycle change")
     }
 }

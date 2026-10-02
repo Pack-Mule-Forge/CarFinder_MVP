@@ -42,7 +42,7 @@ data class Transition(
  * The parking lifecycle as a pure reducer: no clock, no I/O, and the input snapshot is never modified.
  *
  * @requirement FR-001, FR-002, FR-003, FR-004, FR-005, FR-006, FR-007, FR-008, FR-009, FR-010, FR-011, FR-013,
- *   FR-015, FR-018, FR-032
+ *   FR-015, FR-018, FR-032, FR-035
  */
 object ParkingStateMachine {
 
@@ -90,10 +90,41 @@ object ParkingStateMachine {
                 }
             }
 
+            snapshot.lifecycle == PARKED -> recover(snapshot, base, event)
+
             else -> base
         }
         val persist = next.lifecycle != snapshot.lifecycle || next.parkedLocation != snapshot.parkedLocation
         return Transition(from = snapshot.lifecycle, snapshot = next, persist = persist)
+    }
+
+    /**
+     * Recovery from a premature PARKED (a brief stop before the real parking spot). Inside the recovery window,
+     * readings keep feeding a convergence window, and a new convergence replaces the Parked Location without
+     * leaving PARKED. The corrected location keeps the original declaration time, so the window is measured from
+     * the PARKED declaration and a correction never extends it. That bound is the only guard against a driver who
+     * parks, walks away and settles somewhere else, which looks the same as a correction.
+     *
+     * @requirement FR-035
+     */
+    private fun recover(snapshot: MachineSnapshot, base: MachineSnapshot, event: MachineEvent.Reading): MachineSnapshot {
+        val held = snapshot.parkedLocation ?: return base
+        if (!held.isWithinRecoveryWindow(event.nowEpochMillis)) return base.copy(window = ConvergenceWindow.empty())
+
+        val previous = snapshot.window.lastElapsedRealtimeMillis
+        val isTooSoon = previous != null &&
+            event.reading.elapsedRealtimeMillis - previous < TuningConstants.RECOVERY_MIN_SAMPLE_SPACING_MILLIS
+        if (isTooSoon) return base
+
+        val window = snapshot.window.add(event.reading)
+        return if (window.isConverged) {
+            base.copy(
+                parkedLocation = window.toParkedLocation(held.capturedAtEpochMillis),
+                window = ConvergenceWindow.empty(),
+            )
+        } else {
+            base.copy(window = window)
+        }
     }
 
     /**

@@ -40,7 +40,7 @@ data class EngineState(
  * - [restore] is read-only, for the UI: it publishes the persisted state for display and never starts sampling,
  *   subscribes to anything, launches the actor, or writes the store.
  *
- * @requirement FR-002, FR-006, FR-012, FR-014, FR-018, FR-033
+ * @requirement FR-002, FR-006, FR-012, FR-014, FR-018, FR-033, FR-035
  */
 class ParkingEngine(
     private val adapters: PlatformAdapters,
@@ -164,7 +164,7 @@ class ParkingEngine(
 
     /** Re-requests the sampling profile if it changed, then publishes the current state. */
     private fun publish() {
-        val profile = profileFor(snapshot.lifecycle)
+        val profile = profileFor(snapshot)
         if (profile != requestedProfile) {
             requestedProfile = profile
             adapters.location.setProfile(profile)
@@ -175,15 +175,24 @@ class ParkingEngine(
     /**
      * The GUIDANCE profile applies only while PARKED and the guidance screen is visible. An IN_VEHICLE activity hint
      * raises IDLE_WATCH to the DRIVING rate so drive-away is detected sooner; it never changes the lifecycle and
-     * never pauses sampling (research R2).
+     * never pauses sampling (research R2). While the PARKED recovery window is open, sampling stays at the PARKING
+     * rate so a correction converges as quickly as the first declaration did; the window's end is noticed on the
+     * next input, which at that rate is at most one parking-sampling interval late (FR-035).
      */
-    private fun profileFor(lifecycle: LifecycleState): SamplingProfile {
-        val base = when (lifecycle) {
+    private fun profileFor(snapshot: MachineSnapshot): SamplingProfile {
+        val base = when (snapshot.lifecycle) {
             LifecycleState.PARKING -> SamplingProfile.PARKING
             LifecycleState.DRIVING -> SamplingProfile.DRIVING
-            LifecycleState.PARKED -> if (guidanceVisible) SamplingProfile.GUIDANCE else SamplingProfile.IDLE_WATCH
+            LifecycleState.PARKED -> when {
+                guidanceVisible -> SamplingProfile.GUIDANCE
+                isRecoveryOpen(snapshot) -> SamplingProfile.PARKING
+                else -> SamplingProfile.IDLE_WATCH
+            }
             LifecycleState.FINDING -> SamplingProfile.IDLE_WATCH
         }
         return if (base == SamplingProfile.IDLE_WATCH && inVehicleHint) SamplingProfile.DRIVING else base
     }
+
+    private fun isRecoveryOpen(snapshot: MachineSnapshot) =
+        snapshot.parkedLocation?.isWithinRecoveryWindow(adapters.wallClock.epochMillis()) == true
 }

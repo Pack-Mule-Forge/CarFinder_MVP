@@ -44,6 +44,19 @@ user has parked their vehicle and then guides them back to it..."
   principle is to show incomplete information rather than incorrect guidance. This also renames the
   FINDING message, which was "No parked Location yet." in the input.
 
+### Session 2026-10-02
+
+- Q: Real-world test V8 reproduced the original ledger's CR-18: a brief stop (a stoplight, or a stop sign at a
+  lot entrance) lasted long enough for three readings to converge, so PARKED was declared early, and low-speed
+  movement afterwards never reached the driving threshold to clear it. How should this be fixed? → A: By the
+  owner decision already recorded for CR-18 (REQ-PARK-06, 2026-09-29), now FR-035. The driving-speed threshold
+  is not lowered, because that would shrink the dead zone that protects against stop-and-go traffic. Instead,
+  for a bounded time after the PARKED declaration (the parked-recovery window), readings keep being evaluated
+  and a new convergence silently replaces the Parked Location. The bound is essential: a driver who parks, walks
+  away and settles somewhere produces the same "movement, then a new convergence" pattern, so an unbounded
+  recovery would overwrite a correct location with wherever the driver walked to. Gating recovery on
+  in-vehicle activity recognition was considered and deferred to production.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Parking is detected and remembered automatically (Priority: P1)
@@ -80,6 +93,12 @@ centroid of those three readings is stored; then terminate/restart the app and v
 6. **Given** a fresh install (state FINDING), **When** the phone is stationary or moving slowly
    (at or below the parking-speed threshold), **Then** the state stays FINDING and no Parked Location
    is stored; PARKING is reachable only from DRIVING.
+7. **Given** PARKED was declared at a brief stop and the parked-recovery window is still open, **When** the
+   driver creeps on below the driving-speed threshold and the readings converge again at the real spot,
+   **Then** the Parked Location is replaced by the new centroid and its accuracy, the state stays PARKED, and
+   nothing is announced to the user.
+8. **Given** the state is PARKED and the parked-recovery window has closed, **When** readings converge
+   somewhere else (the driver walked away and settled), **Then** the Parked Location is unchanged.
 
 ---
 
@@ -192,6 +211,18 @@ becomes DRIVING and no Parked Location remains stored, including after an app re
   indefinitely in PARKING; no timeout or failure is declared (consciously deferred for MVP).
 - **Speed rises above the driving threshold while PARKING** (false stop, e.g. a long red light):
   the state returns to DRIVING and no Parked Location is stored.
+- **Brief stop before the real parking spot** (a stop sign at the lot entrance, then creeping to a space
+  without reaching the driving threshold): PARKED may be declared at the brief stop. If the readings converge
+  again within the parked-recovery window, the Parked Location is corrected to the new spot (FR-035). The early
+  declaration itself is not prevented, so guidance opened in between points at the brief-stop position.
+- **Brief stop, then the real spot is reached after the parked-recovery window closes** (a very large lot or
+  garage): the early location is kept. This is the accepted cost of the bound (FR-035).
+- **Parking, then walking away and standing still inside the parked-recovery window** (a pay station next to
+  the car): the Parked Location may move to where the user stood. The window keeps this short-lived and close
+  to the car; activity-based gating that would remove it is deferred to production.
+- **Parking, then walking away and settling after the window closes**: the Parked Location is unchanged.
+- **Guidance open during the parked-recovery window**: guidance-rate readings are thinned to about one per
+  parking-sampling interval before the recovery convergence test, so a walking user does not converge.
 - **Slow or stationary phone in FINDING** (fresh install at home, walking): no transition; PARKING
   is reachable only from DRIVING, so no false park occurs before the first drive.
 - **Speed in the 5–25 mph dead zone** in any state: no transition.
@@ -205,7 +236,7 @@ becomes DRIVING and no Parked Location remains stored, including after an app re
   unavailable." is shown (no cone, no distance text); the state stays PARKED and the Parked
   Location is kept. Staleness is re-checked over time, so a fix that stops updating is caught
   even with no new fix arriving (FR-034).
-- **Readings without an accuracy radius during PARKING**: excluded from the convergence window,
+- **Readings without an accuracy radius during PARKING or parked recovery**: excluded from the convergence window,
   because uncertainty must never be silently dropped or approximated.
 - **Restored state is PARKED but no Parked Location can be read** (corrupted storage): the state
   falls back to FINDING, so the rule "a location is held only in PARKED" (FR-018) still holds.
@@ -263,6 +294,16 @@ becomes DRIVING and no Parked Location remains stored, including after an app re
   storing nothing) when filtered speed exceeds the driving-speed threshold before convergence.
 - **FR-011**: On a fresh install, the system MUST start in FINDING. No other flag or marker is
   required to represent "never parked."
+- **FR-035**: While the state is PARKED and no more than the parked-recovery window (120 s) has passed since
+  the PARKED declaration, the system MUST keep evaluating incoming readings for convergence (FR-007), without
+  requiring a preceding DRIVING state. When they converge, it MUST replace the Parked Location with the new
+  centroid and accuracy (FR-012) and persist it (FR-014), with the state remaining PARKED and no message or
+  prompt shown for the correction. The window MUST be measured from the PARKED declaration; a correction MUST
+  NOT restart or extend it. Once the window has closed, the system MUST NOT change the Parked Location except
+  to delete it on drive-away (FR-015), and MUST discard any partial recovery readings. During the window the
+  system MUST sample at least once per parking-sampling interval, and readings used for recovery MUST be about
+  one parking-sampling interval apart (faster readings are thinned). Drive-away (FR-003, FR-015) takes
+  precedence over recovery. Recovery MUST NOT depend on activity recognition.
 
 **Parked Location & persistence**
 
@@ -351,7 +392,7 @@ becomes DRIVING and no Parked Location remains stored, including after an app re
   driving-speed threshold (25 mph), convergence radius (10 m), convergence sample count (3),
   parking-sampling interval (5 s), arrival cone half-angle (45°), distance-unit threshold (500 ft),
   speed-filter window size (3 readings), fix-staleness timeout (30 s), heading-staleness timeout
-  (2 s).
+  (2 s), parked-recovery window (120 s).
 
 ### Lifecycle Transition Summary
 
@@ -362,6 +403,7 @@ becomes DRIVING and no Parked Location remains stored, including after an app re
 | PARKING | last N readings within convergence radius | PARKED | store centroid + accuracy |
 | PARKING | filtered speed > driving threshold | DRIVING | discard partial readings |
 | PARKED | filtered speed > driving threshold | DRIVING | delete Parked Location |
+| PARKED | readings converge within the parked-recovery window | PARKED | replace Parked Location (FR-035) |
 | any | dead-zone filtered speed, single raw speed spike, lost fix, lost heading, arrival answer | (unchanged) | display-only effects |
 
 ### Quality & Engineering Requirements
@@ -409,10 +451,11 @@ only place this spec names implementation technology.
 - **Location Reading**: A position sample with timestamp, speed, and accuracy radius. Readings
   without an accuracy radius are not usable for convergence or guidance.
 - **Convergence Window**: The most recent N (= convergence sample count) readings taken during
-  PARKING; slides as new readings arrive. Converged when every pair of readings is at most the
+  PARKING, or during the parked-recovery window (FR-035); slides as new readings arrive. Converged when every pair of readings is at most the
   convergence radius apart; its centroid becomes the Parked Location.
 - **Parked Location**: The single current saved car position — centroid coordinates, accuracy
-  radius, and time captured. Created on entering PARKED; deleted on PARKED → DRIVING.
+  radius, and time captured. Created on entering PARKED; may be corrected within the parked-recovery
+  window (FR-035), keeping the original time; deleted on PARKED → DRIVING.
 - **Guidance State**: Derived, not persisted — uncertainty radius, distance, bearing to car,
   display bearing, cone half-angle, distance display (value + unit), arrival status, and whether
   guidance is available (FR-031).
@@ -447,6 +490,9 @@ only place this spec names implementation technology.
   reporting unreliable accuracy. No guidance is shown, the state stays PARKED, and the Parked Location is kept.
 - **SC-011**: 100% of numbered requirements appear in the traceability report with at least one
   implementing location (where applicable) and at least one verifying test.
+- **SC-012**: In scripted replay, 100% of sessions with a brief converging stop followed by a second
+  convergence inside the parked-recovery window end with the second location stored, and 0% of convergences
+  after the window has closed change the stored Parked Location.
 
 ## Assumptions
 
@@ -491,3 +537,7 @@ only place this spec names implementation technology.
   infrastructure to find the phone).
 - Rotation-aware/elliptical cone rendering that uses the full screen in any orientation.
 - Timeout/failure handling for PARKING windows that never converge.
+- Gating parked recovery (FR-035) on activity recognition staying in-vehicle, which would remove the remaining
+  walk-away exposure inside the recovery window. Deferred to production by the CR-18 owner decision.
+- Preventing the early PARKED declaration itself at a brief stop. FR-035 corrects it afterwards; it does not
+  stop it happening.

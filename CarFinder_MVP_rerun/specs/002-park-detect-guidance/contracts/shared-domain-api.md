@@ -26,6 +26,7 @@ class ConvergenceWindow private constructor(
     val radiusMeters: Double,
 ) {
     val isConverged: Boolean                                // pairwise test                          — FR-007
+    val lastElapsedRealtimeMillis: Long?                    // newest reading's monotonic time        — FR-035
     fun add(reading: LocationReading): ConvergenceWindow    // ignores readings with null accuracy
     fun toParkedLocation(capturedAtEpochMillis: Long): ParkedLocation   // centroid + accuracy    — FR-012
     companion object {
@@ -100,6 +101,9 @@ data class Transition(
   engine keeps the current snapshot and replaces it with `transition.snapshot` after each call.
 - After every `reduce`, `(to == PARKED) == (parkedLocation != null)`.
 - `Reading` events with null speed never cause a speed transition.
+- A `Reading` in PARKED changes `parkedLocation` only while `parkedLocation.isWithinRecoveryWindow(nowEpochMillis)`
+  and only on a new convergence of thinned readings. The corrected location keeps `capturedAtEpochMillis`, and
+  `from == to == PARKED` with `persist == true` (FR-035).
 
 ## Engine and presenter
 
@@ -115,7 +119,9 @@ class ParkingEngine(adapters: PlatformAdapters, scope: CoroutineScope) {
 }
 ```
 
-`ParkingEngine` covers FR-006, FR-014, FR-018 and FR-033 (together with the service).
+`ParkingEngine` covers FR-006, FR-014, FR-018 and FR-033 (together with the service), and FR-035's sampling
+rule: in PARKED with guidance not visible it requests the `PARKING` profile while the recovery window is open.
+A recovery correction is published through `state` and persisted, but is not emitted on `transitions`.
 
 **Entry-point ownership**: `start()` runs detection (the actor loop, location sampling, activity recognition) and
 is called only from `ParkingDetectionService`'s startup path. `restore()` is the UI's read-only entry point: it

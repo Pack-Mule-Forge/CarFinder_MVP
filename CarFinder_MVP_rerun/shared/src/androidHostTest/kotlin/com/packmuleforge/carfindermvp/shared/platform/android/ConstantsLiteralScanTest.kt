@@ -14,7 +14,7 @@ class ConstantsLiteralScanTest {
     // Matches the FR-030 literal values as standalone numeric tokens. The count constants (window and sample
     // count) cannot be scanned reliably and are covered by review instead.
     private val literalPattern =
-        Regex("""(?<![\w.])(5\.0|25\.0|10\.0|45\.0|500\.0|2_?000L?|5_?000L?|30_?000L?)(?![\w.])""")
+        Regex("""(?<![\w.])(5\.0|25\.0|10\.0|45\.0|500\.0|2_?000L?|5_?000L?|30_?000L?|120_?000L?)(?![\w.])""")
 
     private val constantNames = listOf(
         "PARKING_SPEED_THRESHOLD_MPH",
@@ -27,6 +27,7 @@ class ConstantsLiteralScanTest {
         "SPEED_FILTER_WINDOW_SIZE",
         "FIX_STALENESS_TIMEOUT_MILLIS",
         "HEADING_STALENESS_TIMEOUT_MILLIS",
+        "PARKED_RECOVERY_WINDOW_MILLIS",
     )
 
     /** @requirement QR-002 */

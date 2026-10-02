@@ -37,6 +37,12 @@ object CarFinderConstants {
     /** A heading with no sensor event for this long is unavailable (FR-031). @requirement FR-030 */
     const val HEADING_STALENESS_TIMEOUT_MILLIS = 2_000L
 
+    /**
+     * How long after the PARKED declaration a new convergence may still correct the Parked Location (FR-035).
+     * The bound is what stops a walk away from the car being mistaken for a correction. @requirement FR-030
+     */
+    const val PARKED_RECOVERY_WINDOW_MILLIS = 120_000L
+
     /** Unit conversion: 1 m/s = 2.2369362920544 mph (exact from 1609.344 m per mile). */
     const val METERS_PER_SECOND_TO_MPH = 3_600.0 / 1_609.344
 

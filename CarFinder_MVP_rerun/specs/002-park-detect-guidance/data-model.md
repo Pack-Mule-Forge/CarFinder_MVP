@@ -24,6 +24,7 @@ Each value is defined only here. Tests reference the name, never the literal.
 | `SPEED_FILTER_WINDOW_SIZE` | 3 | readings |
 | `FIX_STALENESS_TIMEOUT_MILLIS` | 30_000 | ms |
 | `HEADING_STALENESS_TIMEOUT_MILLIS` | 2_000 | ms |
+| `PARKED_RECOVERY_WINDOW_MILLIS` | 120_000 | ms |
 
 The same object also holds the conversion factors: `METERS_PER_SECOND_TO_MPH`, `METERS_TO_FEET` and
 `FEET_PER_MILE`.
@@ -35,6 +36,7 @@ The same object also holds the conversion factors: `METERS_PER_SECOND_TO_MPH`, `
 | `IDLE_WATCH_SAMPLING_INTERVAL_MILLIS` | 20_000 | Location interval in FINDING, and in PARKED while guidance is not visible |
 | `DRIVING_SAMPLING_INTERVAL_MILLIS` | 5_000 | Location interval in DRIVING |
 | `GUIDANCE_SAMPLING_INTERVAL_MILLIS` | 1_000 | Location interval while guidance is visible |
+| `RECOVERY_MIN_SAMPLE_SPACING_MILLIS` | `PARKING_SAMPLING_INTERVAL_MILLIS × 4/5` (4_000) | Minimum time between readings used for parked recovery (FR-035, research R13) |
 | `AVAILABILITY_RECHECK_INTERVAL_MILLIS` | 500 | Presenter tick that re-checks fix and heading currency (FR-034, SC-010) |
 | `CONE_LENGTH_FRACTION` | 0.65 | Cone length as a fraction of the minimum display dimension. At most 0.678, so the full sector fits in the minimum-dimension square up to the 45° arrival angle |
 
@@ -80,6 +82,9 @@ Validation happens in the adapter mapping:
 - `centroid()` returns the mean latitude and longitude (research R8).
 - `centroidAccuracyMeters()` returns `max_i(accuracy_i + haversine(centroid, reading_i))` (FR-012).
 - The window is reset to `empty()` on entering and on leaving PARKING (FR-008, FR-010).
+- While PARKED it is reused for recovery (FR-035): it collects thinned readings while the recovery window is
+  open, and is reset to `empty()` on a correction and when the recovery window closes.
+- `lastElapsedRealtimeMillis` is the monotonic time of the newest reading, used to thin recovery readings.
 
 ### ParkedLocation *(persisted)*
 
@@ -88,10 +93,14 @@ Validation happens in the adapter mapping:
 | `latitude` | `Double` | centroid |
 | `longitude` | `Double` | centroid |
 | `accuracyMeters` | `Double` | always non-null and > 0 |
-| `capturedAtEpochMillis` | `Long` | wall-clock time of the PARKED transition |
+| `capturedAtEpochMillis` | `Long` | wall-clock time of the PARKED transition. A recovery correction keeps it. |
 
 - Only one Parked Location exists at a time (FR-013).
 - It is created on PARKING→PARKED (FR-012) and deleted on PARKED→DRIVING (FR-015).
+- `isWithinRecoveryWindow(now)` is true iff `0 ≤ now − capturedAtEpochMillis ≤ PARKED_RECOVERY_WINDOW_MILLIS`.
+  A wall clock earlier than the declaration counts as outside the window (FR-035).
+- A recovery correction replaces the coordinates and accuracy and keeps `capturedAtEpochMillis`, so the window
+  is anchored to the declaration, survives a process restart, and is never extended (FR-035).
 
 ### PersistedParkingRecord *(persisted, `@Serializable`)*
 
@@ -201,6 +210,8 @@ until the filter window is full.
 | DRIVING | `v != null && v ≤ PARKING_SPEED_THRESHOLD_MPH` | PARKING | Reset the window to `empty()`, persist, profile `PARKING` (FR-004, FR-006) |
 | PARKING | the reading (if it has accuracy) is added to the window and `isConverged` | PARKED | Store the centroid and its accuracy as `ParkedLocation`, reset the window to `empty()`, persist, profile `IDLE_WATCH` or `GUIDANCE` (FR-007, FR-012) |
 | PARKING | not converged | PARKING | The window slides. No timeout (FR-008). |
+| PARKED | the recovery window is open, the reading is at least `RECOVERY_MIN_SAMPLE_SPACING_MILLIS` after the last one in the window, it is added, and `isConverged` | PARKED | Replace `ParkedLocation` with the new centroid and accuracy, keeping `capturedAtEpochMillis`. Reset the window to `empty()`, persist. No lifecycle transition is emitted (FR-035). |
+| PARKED | the recovery window is closed | PARKED | Reset the window to `empty()`. The location is not changed (FR-035). |
 | FINDING / PARKED | any `v ≤ DRIVING_SPEED_THRESHOLD_MPH` | unchanged | FINDING never enters PARKING (FR-004). PARKED exits only to DRIVING (FR-009). |
 | any | `v` in the dead zone, `v == null`, lost fix, lost heading, arrival answer | unchanged | Display-only effects (FR-005, FR-031, FR-029) |
 | (restore) | the record is PARKED with no location, or is corrupted | FINDING | Rewrite the normalized record (FR-018) |
@@ -212,6 +223,7 @@ both fast and clustered returns to DRIVING.
 - PARKING → `PARKING`
 - DRIVING → `DRIVING`
 - PARKED with guidance visible → `GUIDANCE`
+- PARKED with guidance not visible and the recovery window open → `PARKING` (FR-035)
 - otherwise → `IDLE_WATCH`, which an `IN_VEHICLE` activity hint upgrades to `DRIVING` until the next lifecycle
   change
 

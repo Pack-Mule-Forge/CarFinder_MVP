@@ -11,7 +11,9 @@ brief in `Claude Prompts/prompt-plan.md`.
 Car Finder detects parking automatically from filtered location speed, confirms the stop with a pairwise
 convergence test on 5-second location samples, persists the centroid and its accuracy as the single Parked
 Location, and guides the user back with an uncertainty cone that rotates with the compass heading and collapses
-into an arrival prompt when the uncertainty reaches the remaining distance.
+into an arrival prompt when the uncertainty reaches the remaining distance. For a bounded window after PARKED
+is declared, a new convergence silently corrects the location, which recovers from a brief stop being taken for
+parking (FR-035, [research.md §R13](research.md#r13-bounded-re-convergence-recovery-while-parked)).
 
 The technical approach is a **Kotlin Multiplatform shared core with native adapters at the edges**, Android
 first:
@@ -87,9 +89,9 @@ so it compiles for iOS unchanged, but no iOS target or UI is built in this versi
 - Proportionate sensor duty cycle (see [research.md §R2](research.md#r2-location-sampling-strategy-and-reuse-of-one-always-on-location-stream)).
 - No Android types in `commonMain`.
 - The Composable never computes geometry.
-- All nine spec constants (FR-030) are defined once and referenced by name.
+- All spec constants (FR-030) are defined once and referenced by name.
 
-**Scale/Scope**: A single user and a single vehicle, with one current Parked Location. There are 34 FRs and
+**Scale/Scope**: A single user and a single vehicle, with one current Parked Location. There are 35 FRs and
 10 QRs, one screen with 4 view variants, and about 6 platform adapters.
 
 No `NEEDS CLARIFICATION` items remain. The spec's 2026-09-30 clarification session resolved the behavioral
@@ -109,7 +111,7 @@ permissions, and centroid accuracy) are resolved in [research.md](research.md).
 | **V. Shared core, adapted at the edges** | `commonMain` imports only Kotlin stdlib, coroutines, and serialization. Platform services are reached through `expect fun createPlatformAdapters(context: PlatformContext): PlatformAdapters`, with `actual typealias PlatformContext = android.content.Context`. `PermissionController` is one suspend `request()` plus observable status, with a per-capability `RequestMode` so iOS implicit-on-first-use motion is not forced into an explicit request. | PASS | PASS |
 | Constraint: on-device first | No network calls anywhere. Fused Location works offline via GNSS. | PASS | PASS |
 | Constraint: Android first, iOS not precluded | There are no iOS targets now. Nothing in `commonMain` is JVM-only: the plan avoids `String.format` and `java.*` there (see research §R9). | PASS | PASS |
-| Constraint: proportionate sensor use | Location rate is state-dependent: 20 s idle-watch, 5 s DRIVING/PARKING, and 1 s only while guidance is on screen. Heading runs only while guidance is visible. Activity Recognition only raises the rate and never gates sampling. | PASS | PASS |
+| Constraint: proportionate sensor use | Location rate is state-dependent: 20 s idle-watch, 5 s DRIVING/PARKING, and 1 s only while guidance is on screen. The 5 s rate is also held for the 120 s parked-recovery window after each PARKED declaration (FR-035). Heading runs only while guidance is visible. Activity Recognition only raises the rate and never gates sampling. | PASS | PASS |
 | Constraint: do not foreclose future directions | Map: the domain exposes lat/lon and accuracy. History: the store interface is single-record and a history store is additive. Phone Finder: the location and heading adapters and `GeoMath` are target-agnostic. Telemetry: the engine emits transition events on a `SharedFlow` that a future sink can collect. | PASS | PASS |
 | Workflow: clarify before plan | Spec §Clarifications, session 2026-09-30, with 6 answers encoded. | PASS | n/a |
 | Workflow: analyze before implement | The first `/speckit.analyze` pass (2026-09-30) found two CRITICAL issues (D1 and D2) and six HIGH/MEDIUM ones. They were fixed at the source: in spec.md, in this plan, in the contracts, and in tasks.md. Analyze must be re-run until it is clean. | pending (downstream) | pending (downstream) |

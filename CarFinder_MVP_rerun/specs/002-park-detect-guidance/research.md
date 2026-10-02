@@ -50,9 +50,9 @@ sampling both read from this shared `SharedFlow<LocationReading>`.
 
 | Profile | When | Priority | Interval (named constant) |
 |---|---|---|---|
-| `IDLE_WATCH` | FINDING, PARKED (guidance not visible) | `PRIORITY_HIGH_ACCURACY` | `TuningConstants.IDLE_WATCH_SAMPLING_INTERVAL` = 20 s |
+| `IDLE_WATCH` | FINDING, PARKED (guidance not visible, recovery window closed) | `PRIORITY_HIGH_ACCURACY` | `TuningConstants.IDLE_WATCH_SAMPLING_INTERVAL` = 20 s |
 | `DRIVING` | DRIVING | `PRIORITY_HIGH_ACCURACY` | `TuningConstants.DRIVING_SAMPLING_INTERVAL` = 5 s |
-| `PARKING` | PARKING | `PRIORITY_HIGH_ACCURACY` | `CarFinderConstants.PARKING_SAMPLING_INTERVAL` (FR-006) |
+| `PARKING` | PARKING, and PARKED while the recovery window is open and guidance is not visible (R13) | `PRIORITY_HIGH_ACCURACY` | `CarFinderConstants.PARKING_SAMPLING_INTERVAL` (FR-006) |
 | `GUIDANCE` | PARKED **and** the guidance UI is at least STARTED | `PRIORITY_HIGH_ACCURACY` | `TuningConstants.GUIDANCE_SAMPLING_INTERVAL` = 1 s |
 
 `minUpdateIntervalMillis` is set to the interval of the profile, and `maxUpdateDelayMillis` is set to 0 (no
@@ -280,7 +280,7 @@ window in memory only is safe: at worst a restart delays a transition by N sampl
   - The window holds the most recent `CONVERGENCE_SAMPLE_COUNT` readings that have an accuracy radius, taken
     in PARKING.
   - It is converged iff `max over pairs haversine(a, b) ≤ CONVERGENCE_RADIUS_METERS`.
-  - The window is cleared on PARKING entry and on exit.
+  - The window is cleared on PARKING entry and on exit. While PARKED it is reused for recovery (R13).
 - **Centroid**: the arithmetic mean of latitudes and longitudes. This is exact enough at ≤ 10 m separation.
   Wrap across the antimeridian is handled by averaging longitude deltas relative to the first reading.
 - **Distance / bearing**: haversine distance, and the forward-azimuth initial bearing normalized to [0, 360).
@@ -390,3 +390,64 @@ Edge Cases. (d) and (e) remain plan-level details that do not change spec behavi
 | d | **Readings without speed** | They are excluded from the speed filter but still used for position and convergence, if they have accuracy. | FR-032 |
 | e | **Background sampling rate outside PARKING** (the spec defers it to planning) | The R2 profile table. | Assumptions |
 | f | **Permission denied** | No extra screen. The default-view rules still apply (FINDING → "Parked location unavailable."), and the service does not start. | Assumptions, FR-016 |
+
+## R13. Bounded re-convergence recovery while PARKED
+
+Added 2026-10-02 for FR-035, after field check V8 reproduced CR-18 from the 001 ledger.
+
+**Decision**:
+- **Where**: in the pure reducer. `ParkingStateMachine` handles a reading in PARKED by feeding the existing
+  `ConvergenceWindow`, which PARKED otherwise leaves empty. No new lifecycle state is added, so FR-001, FR-009
+  and the default-view rules are untouched.
+- **The bound**: `ParkedLocation.isWithinRecoveryWindow(now)`, which is
+  `0 ≤ now − capturedAtEpochMillis ≤ CarFinderConstants.PARKED_RECOVERY_WINDOW_MILLIS`. `now` is the wall-clock
+  time the event already carries.
+- **Anchor**: a correction builds the new location with the **original** `capturedAtEpochMillis`. The window is
+  therefore measured from the PARKED declaration, cannot be extended by a chain of corrections, and needs no new
+  persisted field or schema change: it survives a process restart through the existing record.
+- **Fail closed**: a wall clock earlier than the declaration counts as outside the window. When the window
+  closes, partial recovery readings are discarded.
+- **Thinning**: a reading is used for recovery only if it is at least
+  `TuningConstants.RECOVERY_MIN_SAMPLE_SPACING_MILLIS` (4/5 of the parking-sampling interval) after the last one
+  in the window, by the monotonic fix time.
+- **Sampling**: while the window is open and guidance is not visible, the engine requests the `PARKING` profile.
+  The engine notices the window closing on the next input, which is at most one parking-sampling interval late.
+- **Value**: 120 s. The CR-18 decision names the constant but the requirements document that would give its
+  value (`car-finder-mvp-requirements-v4.md`) is not in this repository, so this is a plan-level choice to
+  confirm in the field.
+- **Silent**: `from == to == PARKED`, so nothing is emitted on `ParkingEngine.transitions`. The record is
+  persisted because the location changed, and the guidance display follows the new location.
+
+**Rationale**:
+- The time bound is the safety property. A driver who parks, walks away and settles produces the same pattern
+  as a correction, and an unbounded recovery would replace a correct location with a confidently wrong one.
+  Keeping the declaration time on a corrected location makes the bound hold by construction.
+- Thinning is needed because pairwise convergence does not look at time. At the 1 s guidance rate three
+  consecutive readings span under 3 m at walking pace and would converge on every step. The spacing is slightly
+  below the parking-sampling interval because Fused delivers no faster than `minUpdateIntervalMillis` but fix
+  timestamps jitter, and an exact-interval rule would drop every second reading.
+- Without the `PARKING` profile, the 20 s idle rate would need the car to sit at the real spot for 40 s before
+  the driver walks off, and recovery would rarely complete.
+- 120 s covers creeping through an ordinary lot. A longer window widens the remaining exposure: inside the
+  window, a user who stands still for about 10 s within sight of the car (a pay station) moves the location
+  there.
+
+**Limits, stated plainly**:
+- This does not prevent the early PARKED declaration. Between the brief stop and the correction the app shows
+  PARKED at the brief-stop position.
+- A stoplight in ordinary driving (the V8 observation) is cleared by drive-away when speed next passes the
+  driving threshold, as before. Recovery only matters when the driver never reaches that speed again.
+- A real spot reached after the window closes is not corrected.
+
+**Alternatives considered**:
+- Lowering `DRIVING_SPEED_THRESHOLD_MPH`. Rejected by the owner: it shrinks the dead zone that protects against
+  stop-and-go traffic, cycling and jogging.
+- Unbounded recovery. Rejected: the walk-away overwrite described above.
+- Gating recovery on `ActivitySignalSource` staying in-vehicle. Deferred to production by the owner decision;
+  the engine's recovery path does not read the activity signal.
+- A separate persisted `parkedDeclaredAt` field. Rejected: `capturedAtEpochMillis` already means "time of the
+  PARKED transition", and reusing it avoids a schema change.
+- Restarting the window on each correction. Rejected: a driver sitting in the car would keep it open
+  indefinitely, which is the unbounded case again.
+- Correcting only when the new centroid is some minimum distance from the old one. Not needed: a
+  re-convergence at the same place replaces the location with an equivalent one.

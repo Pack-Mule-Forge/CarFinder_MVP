@@ -4,7 +4,7 @@ import com.packmuleforge.carfindermvp.shared.guidance.GeoMath
 import com.packmuleforge.carfindermvp.shared.guidance.LatLon
 
 /**
- * The most recent PARKING readings that carry an accuracy radius. Converged when the window is full and every
+ * The most recent PARKING (or PARKED-recovery) readings that carry an accuracy radius. Converged when the window is full and every
  * pair of readings is at most [radiusMeters] apart; distance to the centroid is deliberately not the test.
  * Immutable: [add] returns a new window.
  *
@@ -19,6 +19,9 @@ class ConvergenceWindow private constructor(
         readings.size == sampleCount && readings.indices.all { i ->
             (i + 1 until readings.size).all { j -> distance(readings[i], readings[j]) <= radiusMeters }
         }
+
+    /** Monotonic time of the newest reading in the window, or null when it is empty. */
+    val lastElapsedRealtimeMillis: Long? get() = readings.lastOrNull()?.elapsedRealtimeMillis
 
     /** Adds a reading, dropping the oldest once full. Readings without accuracy are ignored. */
     fun add(reading: LocationReading): ConvergenceWindow =

@@ -11,6 +11,13 @@ object TuningConstants {
     /** Location interval while the guidance display is visible (research R2, SC-008). */
     const val GUIDANCE_SAMPLING_INTERVAL_MILLIS = 1_000L
 
+    /**
+     * Minimum time between readings used for PARKED recovery (FR-035). Below the parking-sampling interval so a
+     * reading delivered slightly early is still used, and far above the guidance interval so guidance-rate
+     * readings are thinned: three readings a second apart converge at any walking speed.
+     */
+    const val RECOVERY_MIN_SAMPLE_SPACING_MILLIS = CarFinderConstants.PARKING_SAMPLING_INTERVAL_MILLIS * 4 / 5
+
     /** Presenter tick that re-checks fix and heading currency without a new event (research R10, SC-010). */
     const val AVAILABILITY_RECHECK_INTERVAL_MILLIS = 500L
 
