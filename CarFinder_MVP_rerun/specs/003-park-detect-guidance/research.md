@@ -216,13 +216,13 @@ database (heavy for one record). Protocol buffers (a second schema toolchain for
   was stopped at that moment. Because the presenter is application-scoped and
   `finishAndRemoveTask()` does not end the process, `onClosed()` (and
   `cancelPermissionSequence()`, called when the screen is finished by other means) clears all
-  denial state, so nothing carries over to the next launch.
-- **Re-creation during a prompt**: the permission controller is application-scoped, holds the
-  pending request, and re-registers its result launcher under one fixed key on every attach. A
-  result for a prompt opened before a rotation therefore resumes the waiting `request`. It does not kill the process, so
+  denial state, so nothing carries over to the next launch. Closing does not kill the process, so
   nothing is reported as a crash and the store is untouched. Detection does not run without
   notification permission (FR-049), although the platform itself would allow the service to run
   with its notification hidden.
+- **Re-creation during a prompt**: the permission controller is application-scoped, holds the
+  pending request, and re-registers its result launcher under one fixed key on every attach. A
+  result for a prompt opened before a rotation therefore resumes the waiting `request`.
 - **Repeated denials**: after repeated denials Android answers a request as denied without
   showing a prompt, so "Allow" leads straight back to the confirmation. The owner accepted this
   as-is (OD-1). The user can still close the app, or grant the permission in system settings.

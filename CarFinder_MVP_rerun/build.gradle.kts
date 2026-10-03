@@ -11,7 +11,6 @@ plugins {
     alias(libs.plugins.android.application) apply false
     // Since AGP 9, com.android.library refuses to work with Kotlin Multiplatform, so KMP modules use this plugin.
     alias(libs.plugins.android.kotlin.multiplatform.library) apply false
-    alias(libs.plugins.android.test) apply false
     alias(libs.plugins.kotlin.compose) apply false
 }
 
