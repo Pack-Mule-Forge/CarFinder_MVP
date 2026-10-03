@@ -4,6 +4,7 @@ import com.packmuleforge.carfindermvp.shared.domain.LifecycleState.DRIVING
 import com.packmuleforge.carfindermvp.shared.domain.LifecycleState.FINDING
 import com.packmuleforge.carfindermvp.shared.domain.LifecycleState.PARKED
 import com.packmuleforge.carfindermvp.shared.domain.LifecycleState.PARKING
+import com.packmuleforge.carfindermvp.shared.guidance.GeoMath
 import com.packmuleforge.carfindermvp.shared.persistence.PersistedParkingRecord
 
 /**
@@ -27,6 +28,7 @@ data class MachineSnapshot(
 sealed interface MachineEvent {
     data class Reading(val reading: LocationReading, val nowEpochMillis: Long) : MachineEvent
     data class Restored(val record: PersistedParkingRecord) : MachineEvent
+    data class RecoveryWindowElapsed(val nowEpochMillis: Long) : MachineEvent
 }
 
 /**
@@ -44,12 +46,46 @@ data class Transition(
  * The lifecycle reducer: pure, deterministic, no clock and no I/O. Events carry their own times.
  *
  * @requirement FR-001, FR-002, FR-003, FR-004, FR-005, FR-006, FR-009, FR-012, FR-013, FR-014, FR-015, FR-017
+ * @requirement FR-021, FR-022, FR-023, FR-024, FR-025, FR-026
  */
 object ParkingStateMachine {
 
     fun reduce(snapshot: MachineSnapshot, event: MachineEvent): Transition = when (event) {
         is MachineEvent.Reading -> onReading(snapshot, event)
         is MachineEvent.Restored -> onRestored(snapshot, event.record)
+        is MachineEvent.RecoveryWindowElapsed -> onWindowElapsed(snapshot, event.nowEpochMillis)
+    }
+
+    /** Rule 5 on the timer: once the window has closed, partly collected recovery readings are discarded. */
+    private fun onWindowElapsed(snapshot: MachineSnapshot, now: Long): Transition {
+        val parked = snapshot.parkedLocation
+        return if (snapshot.lifecycle == PARKED && parked != null && !parked.isRecoveryOpen(now)) {
+            unchanged(snapshot, snapshot.copy(window = ConvergenceWindow()))
+        } else {
+            unchanged(snapshot, snapshot)
+        }
+    }
+
+    /**
+     * Rules 5 to 7: inside the window, thinned readings that converge more than the convergence radius from the
+     * stored location replace it, keeping the original declaration time. Recovery never reads activity recognition.
+     */
+    private fun onParkedReading(before: MachineSnapshot, current: MachineSnapshot, reading: LocationReading, now: Long): Transition {
+        val parked = checkNotNull(current.parkedLocation)
+        if (!parked.isRecoveryOpen(now)) return unchanged(before, current.copy(window = ConvergenceWindow()))
+        val last = current.window.lastReceivedElapsedMillis
+        val isSpacedEnough = last == null ||
+            reading.receivedElapsedMillis - last >= CarFinderConstants.SAMPLING_INTERVAL_PARKING_MILLIS
+        if (reading.accuracyMeters == null || !isSpacedEnough) return unchanged(before, current)
+        val window = current.window.add(reading)
+        if (!window.isConverged) return unchanged(before, current.copy(window = window))
+        val candidate = window.toParkedLocation(parked.declaredAtEpochMillis)
+        val moved = GeoMath.distanceMeters(candidate.latitude, candidate.longitude, parked.latitude, parked.longitude)
+        return if (moved > CarFinderConstants.CONVERGENCE_RADIUS_METERS) {
+            changed(before, current.copy(parkedLocation = candidate, window = ConvergenceWindow()))
+        } else {
+            unchanged(before, current.copy(window = window))
+        }
     }
 
     private fun onRestored(snapshot: MachineSnapshot, record: PersistedParkingRecord): Transition {
@@ -104,7 +140,14 @@ object ParkingStateMachine {
                 }
             }
 
-            FINDING, PARKED -> unchanged(snapshot, current)
+            // A driving speed is never used for a correction (FR-026).
+            PARKED -> if (smoothed != null && smoothed > CarFinderConstants.DRIVING_SPEED_THRESHOLD_MPH) {
+                unchanged(snapshot, current)
+            } else {
+                onParkedReading(snapshot, current, reading, event.nowEpochMillis)
+            }
+
+            FINDING -> unchanged(snapshot, current)
         }
     }
 

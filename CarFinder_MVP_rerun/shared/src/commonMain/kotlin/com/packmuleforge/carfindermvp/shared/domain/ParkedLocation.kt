@@ -17,4 +17,18 @@ data class ParkedLocation(
     init {
         require(accuracyMeters.isFinite() && accuracyMeters > 0) { "accuracyMeters must be finite and > 0" }
     }
+
+    /**
+     * Whether a correction is still allowed at [nowEpochMillis]: from the original declaration through exactly the
+     * parked-recovery window. A wall clock earlier than the declaration counts as closed.
+     *
+     * @requirement FR-021, FR-023
+     */
+    fun isRecoveryOpen(nowEpochMillis: Long): Boolean {
+        val age = nowEpochMillis - declaredAtEpochMillis
+        return age >= 0 && age <= CarFinderConstants.PARKED_RECOVERY_WINDOW_MILLIS
+    }
+
+    /** The first wall-clock time at which the recovery window is closed. */
+    val recoveryClosesAtEpochMillis: Long get() = declaredAtEpochMillis + CarFinderConstants.PARKED_RECOVERY_WINDOW_MILLIS + 1
 }
