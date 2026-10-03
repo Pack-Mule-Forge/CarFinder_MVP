@@ -2,6 +2,8 @@ package com.packmuleforge.carfindermvp.shared.platform
 
 import com.packmuleforge.carfindermvp.shared.platform.android.AndroidDiagnosticLog
 import com.packmuleforge.carfindermvp.shared.platform.android.AndroidMonotonicClock
+import com.packmuleforge.carfindermvp.shared.platform.android.AndroidSensorPort
+import com.packmuleforge.carfindermvp.shared.platform.android.RotationVectorHeadingSource
 import com.packmuleforge.carfindermvp.shared.platform.android.AndroidWallClock
 import com.packmuleforge.carfindermvp.shared.platform.android.DataStoreParkingStore
 import com.packmuleforge.carfindermvp.shared.platform.android.FusedLocationSource
@@ -19,9 +21,11 @@ actual fun createPlatformAdapters(context: PlatformContext): PlatformAdapters {
     val appContext = context.applicationContext
     val log = AndroidDiagnosticLog()
     val monotonicClock = AndroidMonotonicClock()
+    val wallClock = AndroidWallClock()
+    val location = FusedLocationSource(PlayServicesFusedClientPort(appContext), monotonicClock, log)
     return PlatformAdapters(
-        location = FusedLocationSource(PlayServicesFusedClientPort(appContext), monotonicClock, log),
-        heading = InertHeadingSource(),
+        location = location,
+        heading = RotationVectorHeadingSource(AndroidSensorPort(appContext), monotonicClock, location::latestReading, wallClock),
         activity = InertActivitySignalSource(),
         store = DataStoreParkingStore(
             produceFile = { File(appContext.filesDir, "datastore/parking_record.json") },
@@ -30,7 +34,7 @@ actual fun createPlatformAdapters(context: PlatformContext): PlatformAdapters {
         ),
         permissions = StubPermissionController(appContext),
         monotonicClock = monotonicClock,
-        wallClock = AndroidWallClock(),
+        wallClock = wallClock,
         log = log,
     )
 }

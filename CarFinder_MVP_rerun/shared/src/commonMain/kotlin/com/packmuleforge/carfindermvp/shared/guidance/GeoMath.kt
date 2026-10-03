@@ -2,6 +2,7 @@ package com.packmuleforge.carfindermvp.shared.guidance
 
 import kotlin.math.PI
 import kotlin.math.asin
+import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.sin
@@ -26,6 +27,28 @@ object GeoMath {
         val h = sin(dPhi / 2) * sin(dPhi / 2) + cos(phi1) * cos(phi2) * sin(dLambda / 2) * sin(dLambda / 2)
         return 2 * EARTH_RADIUS_METERS * asin(min(1.0, sqrt(h)))
     }
+
+    /**
+     * The initial (forward-azimuth) true bearing from the first point to the second, in [0, 360).
+     *
+     * @requirement FR-032
+     */
+    fun initialBearingDegrees(fromLat: Double, fromLon: Double, toLat: Double, toLon: Double): Double {
+        val phi1 = toRadians(fromLat)
+        val phi2 = toRadians(toLat)
+        val dLambda = toRadians(toLon - fromLon)
+        val y = sin(dLambda) * cos(phi2)
+        val x = cos(phi1) * sin(phi2) - sin(phi1) * cos(phi2) * cos(dLambda)
+        return normalizeDegrees(toDegrees(atan2(y, x)))
+    }
+
+    /** Wraps any angle into [0, 360). */
+    fun normalizeDegrees(degrees: Double): Double {
+        val wrapped = ((degrees % FULL_TURN_DEGREES) + FULL_TURN_DEGREES) % FULL_TURN_DEGREES
+        return if (wrapped >= FULL_TURN_DEGREES) 0.0 else wrapped
+    }
+
+    private val FULL_TURN_DEGREES: Double = 360.0
 
     /** The mean latitude and longitude of [points] (data-model ConvergenceWindow). */
     fun centroid(points: List<Pair<Double, Double>>): Pair<Double, Double> {

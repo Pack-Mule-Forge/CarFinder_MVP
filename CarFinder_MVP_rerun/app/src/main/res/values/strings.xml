@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Car Finder</string>
+    <string name="location_unavailable">Location unavailable</string>
+    <string name="person_icon_description">You</string>
+    <string name="car_icon_description">Your car</string>
 </resources>

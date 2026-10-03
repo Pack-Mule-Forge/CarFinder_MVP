@@ -1,6 +1,7 @@
 package com.packmuleforge.carfindermvp
 
 import android.app.Application
+import com.packmuleforge.carfindermvp.shared.engine.HomeScreenPresenter
 import com.packmuleforge.carfindermvp.shared.engine.ParkingEngine
 import com.packmuleforge.carfindermvp.shared.platform.PlatformAdapters
 import com.packmuleforge.carfindermvp.shared.platform.createPlatformAdapters
@@ -19,6 +20,8 @@ open class CarFinderApplication : Application() {
     val applicationScope: CoroutineScope by lazy { CoroutineScope(SupervisorJob() + engineDispatcher) }
 
     val engine: ParkingEngine by lazy { ParkingEngine(adapters, applicationScope) }
+
+    val presenter: HomeScreenPresenter by lazy { HomeScreenPresenter(engine, adapters, applicationScope) }
 
     open fun createAdapters(): PlatformAdapters = createPlatformAdapters(this)
 }

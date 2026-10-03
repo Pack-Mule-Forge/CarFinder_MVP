@@ -26,6 +26,11 @@ class FusedLocationSource internal constructor(
     private val flow = MutableSharedFlow<LocationReading>(extraBufferCapacity = 64)
     override val readings: SharedFlow<LocationReading> = flow.asSharedFlow()
 
+    /** The most recent reading, used by the heading source for declination. */
+    @Volatile
+    var latestReading: LocationReading? = null
+        private set
+
     private var intervalMillis = CarFinderConstants.SAMPLING_INTERVAL_IDLE_MILLIS
     private var isSubscribed = false
 
@@ -65,6 +70,7 @@ class FusedLocationSource internal constructor(
             log.record(DiagnosticEvent.ReadingDropped)
             return
         }
+        latestReading = reading
         flow.tryEmit(reading)
     }
 
