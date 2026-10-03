@@ -1,32 +1,3 @@
-<!--
-SYNC IMPACT REPORT (scratch material for amendment review — remove before committing)
-
-Version change: (none) → 1.0.0
-Rationale: Initial ratification. No prior constitution existed at .specify/memory/constitution.md;
-all placeholders in the resolved constitution-template scaffold were populated for the first time.
-
-Modified principles: none (no predecessors)
-
-Added sections:
-  - Core Principles
-      I.   Test-First Coverage of Shared Domain Logic (NON-NEGOTIABLE)
-      II.  Forward Requirement Traceability (NON-NEGOTIABLE)
-      III. Platform Adapters Tested via Fakes (NON-NEGOTIABLE)
-      IV.  Compose-Only UI Driven by Hoisted State (NON-NEGOTIABLE)
-      V.   Shared Core, Adapted at the Edges (NON-NEGOTIABLE)
-  - Technology & Platform Constraints  (template slot [SECTION_2_NAME])
-  - Development Workflow & Quality Gates  (template slot [SECTION_3_NAME])
-  - Governance
-
-Removed sections: none
-
-Explicitly excluded from scope (per amendment input, recorded so it is not re-litigated):
-  - Backward traceability (deriving traceability updates automatically from commit diffs) is a
-    recognized future direction but is NOT a requirement of this constitution.
-
-Deferred items / TODOs: none. RATIFICATION_DATE set to the date of this initial adoption.
--->
-
 # Car Finder Constitution
 
 Car Finder is a mobile application that detects when a user has parked and guides them back to
@@ -161,7 +132,7 @@ PATCH/MINOR path as the platform landscape changes.
 - **Android first, iOS not precluded.** The initial release targets Android. The architecture MUST
   NOT foreclose a later iOS release that shares most of the domain logic; Principle V is the
   mechanism by which this is enforced.
-- **Proportionate sensor use.** Use of location, motion, and compass sensors MUST be limited to
+- **Proportionate sensor use.** Use of location, motion, and compass sensors SHOULD be limited to
   what each capability actually needs — in duty cycle, accuracy class, and duration — with
   reasonable battery consumption as an explicit design consideration rather than an afterthought.
 - **Do not foreclose known future directions.** None of the following are MVP features, but
@@ -208,4 +179,4 @@ latter, the amendment procedure above is the route, not a one-off waiver.
 Runtime development guidance for agents and contributors lives in `CLAUDE.md`; where that guidance
 conflicts with this constitution, this constitution governs.
 
-**Version**: 1.0.0 | **Ratified**: 2026-09-18 | **Last Amended**: 2026-09-18
+**Version**: 1.0.0 | **Ratified**: 2026-09-30 | **Last Amended**: 2026-09-30

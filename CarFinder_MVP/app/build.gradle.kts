@@ -1,95 +1,54 @@
+// Android application: Activity, foreground detection service, boot receiver, notification and Compose UI.
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
-    // ADDED: protobuf is the "translator" that reads src/main/proto/parking_data.proto and
-    // generates the code used to save the parked location. The .proto file lives in this
-    // module, so the translator belongs here (it was wrongly attached to `shared` before).
-    alias(libs.plugins.protobuf)
 }
 
 android {
-    namespace = "com.packmuleforge.carfinder_mvp"
-    compileSdk {
-        version = release(37)
-    }
+    namespace = "com.packmuleforge.carfindermvp"
+    compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.packmuleforge.carfinder_mvp"
-        minSdk = 24
+        applicationId = "com.packmuleforge.carfindermvp"
+        // @requirement QR-015
+        minSdk = 26
         targetSdk = 37
         versionCode = 1
         versionName = "1.0"
-
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    buildTypes {
-        release {
-            optimization {
-                enable = false
-            }
-        }
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
     buildFeatures {
         compose = true
+    }
+
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
     }
 }
 
 dependencies {
     implementation(project(":shared"))
+
     implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.activity.compose)
-    // ADDED: fixes fatal lint error InvalidFragmentVersionForActivityResult (2026-09-29) --
-    // registerForActivityResult (ActivityPermissionRequester) needs androidx.fragment >= 1.3.0,
-    // and nothing else in the graph was pinning it that high. See gradle/libs.versions.toml.
-    implementation(libs.androidx.fragment.ktx)
-    implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
-    implementation(libs.androidx.compose.ui.tooling.preview)
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
-    // ADDED: gives MainActivity the Compose viewModel() function (was an unresolved reference).
-    implementation(libs.androidx.lifecycle.viewmodel.compose)
-    // ADDED (T104): non-deprecated androidx.lifecycle.compose.LocalLifecycleOwner, used together
-    // with Lifecycle.repeatOnLifecycle to scope guidance's ephemeral location/heading collection
-    // to STARTED (FR-044).
+    implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.lifecycle.service)
+    implementation(libs.androidx.fragment.ktx)
     implementation(libs.kotlinx.coroutines.core)
-    implementation(libs.play.services.location)
-    implementation(libs.androidx.datastore.proto)
-    // ADDED: runtime library needed by the code protobuf generates (moved here from `shared`).
-    implementation(libs.protobuf.kotlin)
-    testImplementation(libs.junit)
-    // ADDED: some app unit tests use kotlin.test.Test / assertTrue; kotlin-test-junit maps them onto JUnit4.
-    testImplementation(libs.kotlin.test.junit)
-    // ADDED: runTest { } for coroutine-based app tests (e.g. the DataStore repository test).
-    testImplementation(libs.kotlinx.coroutines.test)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(libs.androidx.junit)
-    debugImplementation(libs.androidx.compose.ui.test.manifest)
-    debugImplementation(libs.androidx.compose.ui.tooling)
-}
 
-// ADDED: protobuf settings (moved here from `shared`).
-// `protoc` is the compiler that turns the .proto file into Java and Kotlin code.
-// Its version (3.24.4) is NOT the same thing as the Gradle plugin version (0.9.5).
-protobuf {
-    protoc {
-        artifact = "com.google.protobuf:protoc:3.24.4"
-    }
-    generateProtoTasks {
-        all().forEach { task ->
-            task.builtins {
-                create("java")
-                create("kotlin")
-            }
-        }
-    }
+    testImplementation(project(":shared-testing"))
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlin.test.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core)
+    testImplementation(libs.androidx.compose.ui.test.junit4)
+    testImplementation(libs.androidx.espresso.core)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

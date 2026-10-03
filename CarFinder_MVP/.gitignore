@@ -15,3 +15,8 @@
 local.properties
 /app/release/
 .claude/settings.local.json
+# Added for 002 (T008): IDE, env and local-override files
+.idea/
+.env
+.env.*
+*.local.*
