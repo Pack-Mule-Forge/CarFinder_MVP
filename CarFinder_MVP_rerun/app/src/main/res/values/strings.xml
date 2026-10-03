@@ -2,6 +2,8 @@
 <resources>
     <string name="app_name">Car Finder</string>
     <string name="location_unavailable">Location unavailable</string>
+    <string name="driving">Driving</string>
+    <string name="parking_soon">Sensing you will be parking soon</string>
     <string name="person_icon_description">You</string>
     <string name="car_icon_description">Your car</string>
     <string name="arrived_message">You have arrived</string>

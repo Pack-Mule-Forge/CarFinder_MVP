@@ -25,6 +25,8 @@ fun HomeScreen(
         Surface(Modifier.fillMaxSize()) {
             when (state) {
                 HomeScreenState.Unavailable -> StatusMessage(stringResource(R.string.location_unavailable))
+                HomeScreenState.Driving -> StatusMessage(stringResource(R.string.driving))
+                HomeScreenState.Parking -> StatusMessage(stringResource(R.string.parking_soon))
                 is HomeScreenState.Guidance -> GuidanceDisplay(state)
                 is HomeScreenState.Arrived -> ArrivedDisplay(state.isPromptVisible, onArrivalAnswered)
                 // The remaining states are drawn by the stories that introduce them.
