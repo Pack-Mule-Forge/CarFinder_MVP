@@ -1,33 +1,35 @@
 # Car Finder
 
-Car Finder is an Android app that notices when you have parked, remembers where the car is, and guides you back
-to it. It detects parking automatically from your phone's filtered speed and a cluster of converging location
-fixes, with no "I parked" button. It then shows a cone that points toward the car and widens when the position
-is uncertain, along with the remaining distance. When the uncertainty covers the remaining distance, it says
-"You have arrived". Everything runs on the device, and detection keeps running in the background with a
-persistent notification.
+Car Finder is an Android app that notices when you have parked, remembers where the car is, and guides you back to
+it. It detects parking from the phone's smoothed speed and three location readings that settle in one place, with no
+"I parked" button, and quietly corrects a premature "parked" if you settle somewhere else within a short window. To
+guide you back it shows a cone that points at the car and widens when either position is uncertain, with the
+distance in the middle; when the uncertainty covers the remaining distance it says "You have arrived" and asks
+"Do you see your car?". Driving away clears the old location. Everything runs on the device, and detection keeps
+running in the background behind a persistent notification.
 
-The domain logic lives in a Kotlin Multiplatform shared core so that a future iOS app can reuse it. The Android
-app adds native adapters (location, compass, activity recognition, storage, permissions) and a Jetpack Compose UI.
+The domain logic lives in a Kotlin Multiplatform shared core so a future iOS app can reuse it. The Android app adds
+native adapters (location, heading, activity recognition, storage, permissions) and a Jetpack Compose UI.
 
 ## Project layout
 
 | Path | What it holds |
 |---|---|
-| `shared/` | KMP module. `commonMain` has the state machine, guidance math, presenter and adapter interfaces; `androidMain` has the Android adapters. |
-| `shared-testing/` | Fakes for every platform adapter, used by `:shared` and `:app` tests. |
-| `app/` | Android app: foreground service, boot receiver, notification and the Compose home screen. |
-| `benchmark/` | Macrobenchmark that measures guidance frame timing on a device (FR-027). |
-| `tools/traceability/` | Script that produces the requirement traceability report, plus its Pester tests. |
-| `specs/002-park-detect-guidance/` | Spec, plan, research, data model, contracts, quickstart and tasks. |
+| `shared/` | KMP module. `commonMain`: state machine, recovery, sampling policy, guidance math, engine, presenter, adapter interfaces. `androidMain`: the Android adapters and the platform factory. |
+| `shared-testing/` | Fakes for every adapter, reading builders and the scripted-replay harness, used by `:shared` and `:app` tests. |
+| `app/` | Android app: foreground detection service, boot receiver, notification and the Compose home screen. |
+| `tools/traceability/` | Script that produces the requirement traceability report, its Pester tests, and the declared no-code list. |
+| `specs/003-park-detect-guidance/` | Spec, plan, research, data model, contracts, quickstart, tasks, findings ledger and validation results. |
 
 ## Prerequisites
 
-- JDK 17 or later. Android Studio's bundled JBR works; set `JAVA_HOME` to it if `java` is not on your PATH.
-- Android SDK with the platform named by `compileSdk` (API 37). Point `local.properties` at it (`sdk.dir=...`).
-- PowerShell 5.1 or later, and Pester 5 or later for the traceability tests:
+- A JDK to launch Gradle, with `JAVA_HOME` set to it. Android Studio's bundled runtime works. Gradle provisions its
+  own daemon toolchain (JDK 25, see `gradle/gradle-daemon-jvm.properties`).
+- Android SDK with platform 37. Point `local.properties` at it (`sdk.dir=...`).
+- PowerShell 5.1 or later and Pester 5 or later for the tooling tests:
   `Install-Module Pester -MinimumVersion 5.0 -Scope CurrentUser`.
-- For device checks: an Android phone on API 34 or later with GPS and a magnetometer, and `adb`.
+- For device checks: an emulator or phone on Android 8.0 (API 26) or later, and `adb`. Field checks need a phone
+  with GPS and a compass.
 
 ## Build
 
@@ -40,36 +42,36 @@ The debug APK is written to `app/build/outputs/apk/debug/app-debug.apk`.
 ## Test
 
 ```powershell
-# Shared domain, engine, presenter and Android adapter tests (JVM, via Robolectric)
+# Shared domain, engine, presenter, replay and Android adapter tests (JVM, Robolectric for the adapters)
 .\gradlew.bat :shared:testAndroidHostTest
 
-# App tests: Compose semantics UI tests, service, boot receiver, source scans
+# App tests: Compose semantics UI tests, service, boot receiver, Activity and permission flows, source scans
 .\gradlew.bat :app:testDebugUnitTest
 
-# Traceability tool tests
+# Lint
+.\gradlew.bat :app:lintDebug
+
+# Traceability tool and findings-ledger tests
 Invoke-Pester tools\traceability\tests
 ```
 
-None of these need an emulator.
-
-**Frame timing (FR-027)** needs a connected physical device:
-
-```powershell
-.\gradlew.bat :benchmark:connectedBenchmarkAndroidTest
-.\tools\benchmark\Assert-FrameBudget.ps1
-```
+None of these need an emulator. Operating-system behavior (permission prompts, background start, reboot, process
+death) is checked on an emulator or device with the steps in the
+[quickstart](specs/003-park-detect-guidance/quickstart.md#5-operating-system-behavior-emulator-or-device-required-not-optional);
+the latest results are in [validation-results.md](specs/003-park-detect-guidance/validation-results.md).
 
 ## Traceability report
 
-Every requirement in the spec is linked to code and tests by KDoc `@requirement FR-xxx` tags (constitution
+Every requirement in the spec is linked to code and tests by `@requirement FR-xxx` / `QR-xxx` tags (constitution
 Principle II). To regenerate the report:
 
 ```powershell
 .\tools\traceability\Get-TraceabilityReport.ps1 -FailOnGaps
 ```
 
-It writes `specs/002-park-detect-guidance/traceability.md` and exits 1 if any requirement is untested or
-untraced, or if any tag points at a requirement that does not exist.
+It writes `specs/003-park-detect-guidance/traceability.md` and exits 1 if a requirement has no code annotation
+(and is not on the declared no-code list), has code but no test, or if a tag names a requirement the spec does not
+define.
 
 ## Install on a phone
 
@@ -77,14 +79,17 @@ untraced, or if any tag points at a requirement that does not exist.
 adb install -r app\build\outputs\apk\debug\app-debug.apk
 ```
 
-On first launch, grant location, notification and activity-recognition access. Then, in system Settings, set
-location access to **Allow all the time** so detection can restart after a reboot. Without it, the notification
-explains what is missing, and detection resumes the next time the app is opened.
+On first launch the app asks, one at a time, for location, background location ("Allow all the time"), physical
+activity and notifications. Location and notifications are required: denying either shows a confirmation that
+Car Finder cannot run without it; choosing **Close** closes the app, and **Allow** or back asks again. With only
+"While using the app" location, detection runs while the app has been opened since the last restart, and the
+notification asks for "Allow all the time" so it can restart on its own after a reboot.
 
 ## Further documentation
 
-- [Feature spec](specs/002-park-detect-guidance/spec.md)
-- [Implementation plan](specs/002-park-detect-guidance/plan.md) and [research decisions](specs/002-park-detect-guidance/research.md)
-- [Contracts](specs/002-park-detect-guidance/contracts/)
-- [Quickstart and validation guide](specs/002-park-detect-guidance/quickstart.md)
+- [Feature spec](specs/003-park-detect-guidance/spec.md)
+- [Implementation plan](specs/003-park-detect-guidance/plan.md) and [research decisions](specs/003-park-detect-guidance/research.md)
+- [Data model](specs/003-park-detect-guidance/data-model.md) and [contracts](specs/003-park-detect-guidance/contracts/)
+- [Quickstart and validation guide](specs/003-park-detect-guidance/quickstart.md)
+- [Tasks](specs/003-park-detect-guidance/tasks.md) and [findings ledger](specs/003-park-detect-guidance/analysis-findings.md)
 - [Project constitution](.specify/memory/constitution.md)

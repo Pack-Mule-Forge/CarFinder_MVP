@@ -132,7 +132,12 @@ data class PermissionState(val statuses: Map<Capability, PermissionStatus> = emp
  */
 data class DenialConfirmation(val capability: Capability, val isClosing: Boolean)
 
-/** Every platform service the shared core uses, built by the platform factory or from fakes in tests. */
+/**
+ * Every platform service the shared core uses, built by the platform factory or from fakes in tests. Each is an
+ * interface, never an `expect` class, so tests replace it with a fake.
+ *
+ * @requirement QR-003
+ */
 class PlatformAdapters(
     val location: LocationSource,
     val heading: HeadingSource,

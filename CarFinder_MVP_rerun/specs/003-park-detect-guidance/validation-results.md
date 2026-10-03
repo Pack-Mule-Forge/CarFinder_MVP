@@ -4,6 +4,20 @@ Results of the checks in [quickstart.md](quickstart.md). Automated suites are re
 [tasks.md](tasks.md) and in the commit messages; this file holds the operating-system checks (§5) and the field
 checks (§6).
 
+## Full automated gate (T118)
+
+**Date**: 2026-10-03 · **Command**: `gradlew :app:assembleDebug :shared:testAndroidHostTest :app:testDebugUnitTest
+:app:lintDebug --rerun-tasks`, then `Invoke-Pester tools\traceability\tests` · **JDK**: Gradle-provisioned 25
+
+| Suite | Result |
+|---|---|
+| `:app:assembleDebug` | BUILD SUCCESSFUL |
+| `:shared:testAndroidHostTest` | 196 tests, 0 failed |
+| `:app:testDebugUnitTest` | 53 tests, 0 failed |
+| `:app:lintDebug` | 0 errors, 16 warnings: 14 newer-version notices for the pinned catalog versions (`GradleDependency`, `NewerVersionAvailable`, `AndroidGradlePluginVersion`), `MissingApplicationIcon`, `DataExtractionRules` |
+| Pester (`tools/traceability/tests`) | 24 passed, 0 failed |
+| Traceability (`-FailOnGaps`, T117) | 72 requirements, 72 traced, 0 gaps, 0 orphaned tags, exit 0 |
+
 ## §5 Operating-system behavior (T114)
 
 **Date**: 2026-10-03 · **Device**: Android Emulator, AVD `Pixel_9`, system image `android-37.2` (Google Play),
