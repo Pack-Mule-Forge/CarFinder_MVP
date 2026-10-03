@@ -16,7 +16,7 @@ class AdapterBoundaryScanTest {
     /** @requirement QR-003 */
     @Test
     fun onlyThePlatformFactoryIsExpectActual() {
-        val expects = EXPECT_DECLARATION.findAll(commonSource).map { it.groupValues[1].trim() }.toList()
+        val expects = EXPECT_DECLARATION.findAll(commonSource).map { "${it.groupValues[1]} ${it.groupValues[2]}" }.toList()
         val unexpected = expects.filterNot { it in ALLOWED_EXPECTS }
         assertTrue(unexpected.isEmpty(), "Unexpected expect declarations: $unexpected")
     }
@@ -50,7 +50,9 @@ class AdapterBoundaryScanTest {
     }
 
     private companion object {
-        val EXPECT_DECLARATION = Regex("""\bexpect\s+((?:class|fun|object|val|interface)\s+\w+)""")
+        // Modifiers such as "abstract" are allowed; PlatformContext is abstract because Android's Context is.
+        val EXPECT_DECLARATION =
+            Regex("""\bexpect\s+(?:(?:abstract|open|sealed|data|value|enum|annotation)\s+)*(class|fun|object|val|var|interface)\s+(\w+)""")
         val ALLOWED_EXPECTS = setOf("class PlatformContext", "fun createPlatformAdapters")
         val ADAPTERS = listOf(
             "LocationSource", "HeadingSource", "ActivitySignalSource", "ParkingStore", "PermissionController",

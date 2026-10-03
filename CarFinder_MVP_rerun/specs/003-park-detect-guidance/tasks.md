@@ -99,9 +99,9 @@ empty skeleton builds and runs a test in each module.
 **Purpose**: Constants, value types, adapter interfaces, fakes and the traceability tool. Every
 story depends on these.
 
-**Ã¢Å¡Â Ã¯Â¸Â CRITICAL**: No story work starts until this phase is complete.
+**ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â CRITICAL**: No story work starts until this phase is complete.
 
-### Tests for Foundational Ã¢Å¡Â Ã¯Â¸Â (write first, must fail)
+### Tests for Foundational ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â (write first, must fail)
 
 - [X] T008 Write `SAT/SourceTree.kt` (test helper: locate the repository root from the working
   directory, list `.kt` files under a directory, return paths relative to the root). T009 to T012 use
@@ -199,61 +199,61 @@ story depends on these.
 
 ---
 
-## Phase 3: User Story 1 - Parking is detected and remembered automatically (Priority: P1) Ã°Å¸Å½Â¯ MVP
+## Phase 3: User Story 1 - Parking is detected and remembered automatically (Priority: P1) ÃƒÂ°Ã…Â¸Ã…Â½Ã‚Â¯ MVP
 
-**Goal**: The shared engine turns readings into FINDING Ã¢â€ â€™ DRIVING Ã¢â€ â€™ PARKING Ã¢â€ â€™ PARKED, stores the
+**Goal**: The shared engine turns readings into FINDING ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ DRIVING ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ PARKING ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ PARKED, stores the
 centroid with the FR-016 radius, and keeps it across restarts.
 
 **Independent Test**: Replay drive, slow, three converging readings through `ParkingEngine` with
 fakes; the store holds PARKED and the centroid; a new engine on the same store restores it.
 
-### Tests for User Story 1 Ã¢Å¡Â Ã¯Â¸Â (write first, must fail)
+### Tests for User Story 1 ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â (write first, must fail)
 
-- [ ] T027 [P] [US1] Write `ST/domain/SpeedFilterTest.kt` (FR-007, FR-008): `smoothed` is `null`
+- [X] T027 [P] [US1] Write `ST/domain/SpeedFilterTest.kt` (FR-007, FR-008): `smoothed` is `null`
   with fewer than `SPEED_FILTER_WINDOW_SIZE` speeds; it is the median, not the mean, of a full
   window (two slow and one far above the driving threshold gives the slow value); the oldest speed
   leaves when a new one arrives; `add` returns a new filter and leaves the receiver unchanged.
-- [ ] T028 [P] [US1] Write `ST/domain/ConvergenceWindowTest.kt` (FR-010, FR-011, FR-016): pairwise
+- [X] T028 [P] [US1] Write `ST/domain/ConvergenceWindowTest.kt` (FR-010, FR-011, FR-016): pairwise
   distances 0.4R, 0.6R, 0.9R converge and 0.4R, 0.6R, 1.1R do not (R = `CONVERGENCE_RADIUS_METERS`);
   a pair exactly R apart converges; fewer than `CONVERGENCE_SAMPLE_COUNT` readings never converge; a
   reading with `accuracyMeters == null` is not added; the oldest reading leaves when full; the
   accuracy radius equals `max(accuracy + distance to centroid)` and is larger than the mean of the
   accuracies when readings are spread; `toParkedLocation` carries the given declaration time.
-- [ ] T029 [P] [US1] Write `ST/domain/ParkingStateMachineParkTest.kt` (FR-001, FR-002, FR-003,
+- [X] T029 [P] [US1] Write `ST/domain/ParkingStateMachineParkTest.kt` (FR-001, FR-002, FR-003,
   FR-004, FR-005, FR-006, FR-008, FR-009, FR-012, FR-013, FR-014, FR-015, FR-017): initial snapshot
-  is FINDING with no location; FINDING Ã¢â€ â€™ DRIVING above the driving threshold; DRIVING Ã¢â€ â€™ PARKING at or
+  is FINDING with no location; FINDING ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ DRIVING above the driving threshold; DRIVING ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ PARKING at or
   below the parking threshold, and exactly at it; FINDING never enters PARKING at any slow speed;
   dead-zone speeds change nothing in every state; no transition before the filter is full even for a
   very fast reading; a reading with no speed causes no transition even when the filter's smoothed
-  value is past a threshold; PARKING Ã¢â€ â€™ PARKED on convergence with the location's
+  value is past a threshold; PARKING ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ PARKED on convergence with the location's
   `declaredAtEpochMillis` equal to the event time; the reading that causes PARKING entry is not in
-  the window; non-converging readings slide indefinitely with no other state; PARKING Ã¢â€ â€™ DRIVING
+  the window; non-converging readings slide indefinitely with no other state; PARKING ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ DRIVING
   discards the window and stores nothing; after every step `(lifecycle == PARKED) ==
   (parkedLocation != null)`; `reduce` leaves its input unchanged and is deterministic.
-- [ ] T030 [P] [US1] Write `ST/persistence/PersistedParkingRecordTest.kt` (FR-017, FR-020):
+- [X] T030 [P] [US1] Write `ST/persistence/PersistedParkingRecordTest.kt` (FR-017, FR-020):
   `normalized()` turns PARKED with no location into FINDING; drops a location held with any state
   other than PARKED; leaves a consistent record equal to itself; JSON round-trips, including
   `declaredAtEpochMillis`.
-- [ ] T031 [P] [US1] Write `ST/domain/SamplingPolicyTest.kt` (FR-027, FR-028): a table-driven test
-  over every combination of the four lifecycle states Ãƒâ€” recovery open/closed Ãƒâ€” guidance
-  visible/hidden Ãƒâ€” in-vehicle true/false, asserting the five rows of
+- [X] T031 [P] [US1] Write `ST/domain/SamplingPolicyTest.kt` (FR-027, FR-028): a table-driven test
+  over every combination of the four lifecycle states ÃƒÆ’Ã¢â‚¬â€ recovery open/closed ÃƒÆ’Ã¢â‚¬â€ guidance
+  visible/hidden ÃƒÆ’Ã¢â‚¬â€ in-vehicle true/false, asserting the five rows of
   [data-model.md](data-model.md) "Sampling interval" in order, including: PARKED with recovery open
   and guidance visible gives the parking interval; FINDING not in vehicle gives the idle interval;
   FINDING in vehicle gives the parking interval; the in-vehicle flag never lowers an interval.
-- [ ] T032 [P] [US1] Write `ST/engine/ParkingEngineParkTest.kt` (FR-003, FR-018, FR-020, FR-027,
+- [X] T032 [P] [US1] Write `ST/engine/ParkingEngineParkTest.kt` (FR-003, FR-018, FR-020, FR-027,
   FR-029): `start()` restores a seeded PARKED record; a park sequence writes the record before the
   state is published (collect `state` and compare with the store at each emission); an unreadable
   store yields FINDING, a `StoreUnreadable` log event and a store that accepts the next write; a
   seeded inconsistent record is normalized, logged as `RecordNormalized` and rewritten once;
-  `intervalHistory` follows FINDING (idle) Ã¢â€ â€™ DRIVING (parking) Ã¢â€ â€™ PARKING (parking) with no repeated
+  `intervalHistory` follows FINDING (idle) ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ DRIVING (parking) ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ PARKING (parking) with no repeated
   consecutive value; `start()` twice subscribes once; `restore()` before `start()` publishes the
   stored state, starts nothing and writes nothing.
-- [ ] T033 [P] [US1] Write `ST/engine/ParkReplayTest.kt` (SC-001, SC-002, SC-004): drive, stop and
+- [X] T033 [P] [US1] Write `ST/engine/ParkReplayTest.kt` (SC-001, SC-002, SC-004): drive, stop and
   converge stores the centroid on the third converging reading with no other input; a session of
   dead-zone speeds only changes nothing; a session with no drive stores nothing; a very fast first
   reading changes nothing; a second engine created on the same store after PARKED reports PARKED and
   the same location.
-- [ ] T034 [P] [US1] Write `SAT/FusedLocationSourceTest.kt` (FR-009, FR-010, FR-027, FR-029, FR-049)
+- [X] T034 [P] [US1] Write `SAT/FusedLocationSourceTest.kt` (FR-009, FR-010, FR-027, FR-029, FR-049)
   against a fake `FusedClientPort`: a fix that reports no accuracy maps to `accuracyMeters == null`
   even though the platform value reads `0.0`; the same for speed; non-finite or negative values map
   to `null`; out-of-range coordinates drop the reading and record `ReadingDropped`;
@@ -261,57 +261,57 @@ fakes; the store holds PARKED and the centroid; a new engine on the same store r
   and no batching, and never holds two subscriptions; the same interval twice issues one request;
   `start()` without fine-location permission issues no request and does not throw; each reading
   carries the monotonic clock's receipt time.
-- [ ] T035 [P] [US1] Write `SAT/DataStoreParkingStoreTest.kt` (FR-018, FR-020) on a temporary file:
+- [X] T035 [P] [US1] Write `SAT/DataStoreParkingStoreTest.kt` (FR-018, FR-020) on a temporary file:
   write then read round-trips state and location; a new store instance on the same file reads the
   same record; a file of garbage bytes reads as `DEFAULT`, records `StoreUnreadable`, and a following
   write and read succeed; a record with an unknown `schemaVersion` is treated the same way.
 
 ### Implementation for User Story 1
 
-- [ ] T036 [P] [US1] Implement `SC/domain/SpeedFilter.kt` (FR-007, FR-008). Makes T027 pass.
-- [ ] T037 [P] [US1] Add `normalized()` to `SC/persistence/PersistedParkingRecord.kt` (FR-017,
+- [X] T036 [P] [US1] Implement `SC/domain/SpeedFilter.kt` (FR-007, FR-008). Makes T027 pass.
+- [X] T037 [P] [US1] Add `normalized()` to `SC/persistence/PersistedParkingRecord.kt` (FR-017,
   FR-020). Makes T030 pass.
-- [ ] T038 [P] [US1] Implement `SC/domain/SamplingPolicy.kt` (FR-027, FR-028). Makes T031 pass.
-- [ ] T039 [US1] Create `SC/guidance/GeoMath.kt` with `distanceMeters` (haversine) and
+- [X] T038 [P] [US1] Implement `SC/domain/SamplingPolicy.kt` (FR-027, FR-028). Makes T031 pass.
+- [X] T039 [US1] Create `SC/guidance/GeoMath.kt` with `distanceMeters` (haversine) and
   `centroid(points)`; `initialBearingDegrees` is added in T060. Implement
   `SC/domain/ConvergenceWindow.kt` (FR-010, FR-011, FR-016) including `lastReceivedElapsedMillis`.
   Makes T028 pass.
-- [ ] T040 [US1] Implement `SC/domain/ParkingStateMachine.kt` (FR-001, FR-002, FR-003, FR-004,
+- [X] T040 [US1] Implement `SC/domain/ParkingStateMachine.kt` (FR-001, FR-002, FR-003, FR-004,
   FR-005, FR-006, FR-009, FR-012, FR-013, FR-014, FR-015, FR-017): `MachineSnapshot`, `MachineEvent`
   (`Reading`, `Restored`), `Transition` (with `persist` and `normalizedOnRestore`, as in
   [contracts/shared-domain-api.md](contracts/shared-domain-api.md)), and `reduce` implementing
   transition rules 2, 3, 4, 8 and the restore row of [data-model.md](data-model.md), and rule 1 from
   FINDING and PARKING only. PARKED ignores readings for now (US3, US6). Makes T029 pass. Depends on
   T036, T039.
-- [ ] T041 [US1] Implement `SC/engine/ParkingEngine.kt` (FR-003, FR-018, FR-020, FR-027, FR-029):
+- [X] T041 [US1] Implement `SC/engine/ParkingEngine.kt` (FR-003, FR-018, FR-020, FR-027, FR-029):
   `EngineState`, the single-consumer actor, `restore()`, `start()`, `stop()`, `setGuidanceVisible`,
   `transitions`; persist before publish; `SamplingPolicy` applied after every input with the request
   re-issued only on change; `RecordNormalized` logged when a restore rewrote the record. Makes T032
   and T033 pass. Depends on T037, T038, T040.
-- [ ] T042 [P] [US1] Create `SA/FusedClientPort.kt` (seam over the fused client) and implement
+- [X] T042 [P] [US1] Create `SA/FusedClientPort.kt` (seam over the fused client) and implement
   `SA/FusedLocationSource.kt` (FR-009, FR-010, FR-027, FR-029, FR-049). Makes T034 pass.
-- [ ] T043 [P] [US1] Implement `SA/ParkingRecordSerializer.kt` and `SA/DataStoreParkingStore.kt`
+- [X] T043 [P] [US1] Implement `SA/ParkingRecordSerializer.kt` and `SA/DataStoreParkingStore.kt`
   (FR-018, FR-020) with a corruption handler that replaces the file with `DEFAULT` and records
   `StoreUnreadable`. Makes T035 pass.
-- [ ] T044 [P] [US1] Implement `SA/AndroidClocks.kt` (`MonotonicClock`, `WallClock`) and
+- [X] T044 [P] [US1] Implement `SA/AndroidClocks.kt` (`MonotonicClock`, `WallClock`) and
   `SA/AndroidDiagnosticLog.kt` (writes event type and count only).
-- [ ] T045 [P] [US1] Write `SAT/AndroidDiagnosticLogTest.kt` (FR-020): each `DiagnosticEvent` type
+- [X] T045 [P] [US1] Write `SAT/AndroidDiagnosticLogTest.kt` (FR-020): each `DiagnosticEvent` type
   produces one log line; no line contains a decimal coordinate pattern.
-- [ ] T046 [US1] Create `SA/StubPermissionController.kt`: an `internal` `PermissionController`
+- [X] T046 [US1] Create `SA/StubPermissionController.kt`: an `internal` `PermissionController`
   that reports `GRANTED` or `NOT_REQUESTED` from the platform's current grants, whose `request`
   returns the current grant without prompting. It is replaced in T107.
-- [ ] T047 [US1] Create `SC/platform/PlatformFactory.kt` with `expect class PlatformContext` and
+- [X] T047 [US1] Create `SC/platform/PlatformFactory.kt` with `expect class PlatformContext` and
   `expect fun createPlatformAdapters(context: PlatformContext): PlatformAdapters`, and, in the same
   task so the module never holds an `expect` without its `actual`,
   `shared/src/androidMain/kotlin/com/packmuleforge/carfindermvp/shared/platform/PlatformFactory.android.kt`
   with `actual typealias PlatformContext = android.content.Context` and
   `actual fun createPlatformAdapters` wiring T042 to T046 with the inert heading and activity sources
   (QR-014).
-- [ ] T048 [US1] Implement `AM/CarFinderApplication.kt`: `open fun createAdapters()`, an
+- [X] T048 [US1] Implement `AM/CarFinderApplication.kt`: `open fun createAdapters()`, an
   application-scoped `engine` created once, and `open val engineDispatcher`. Create
   `AT/TestCarFinderApplication.kt` overriding `createAdapters()` with a `FakePlatform` and using an
   unconfined dispatcher.
-- [ ] T049 [US1] Delete `AT/SkeletonAppTest.kt`. Run
+- [X] T049 [US1] Delete `AT/SkeletonAppTest.kt`. Run
   `.\gradlew.bat :shared:testAndroidHostTest :app:testDebugUnitTest`. Every US1 test passes.
 
 **Checkpoint**: Parking is detected, stored and restored in the shared engine.
@@ -327,21 +327,21 @@ and the distance; without them it says "Location unavailable".
 half-angle and the distance text against FR-030 to FR-037; stop the fix or the heading and see
 "Location unavailable" with the location kept.
 
-### Tests for User Story 2 Ã¢Å¡Â Ã¯Â¸Â (write first, must fail)
+### Tests for User Story 2 ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â (write first, must fail)
 
 - [ ] T050 [P] [US2] Write `ST/guidance/GeoMathTest.kt` (FR-032): haversine distance and initial
   bearing against at least three published reference pairs within stated tolerances; bearing due
   north is 0, due east 90; the result is always in [0, 360); zero distance does not fail.
 - [ ] T051 [P] [US2] Write `ST/guidance/GuidanceCalculatorTest.kt` (FR-030, FR-031, FR-032, FR-037,
   FR-038): uncertainty is the sum of the two radii; half-angle equals `atan(u/d)` for several pairs
-  and is 90 at distance zero; display bearing follows `(360 Ã¢Ë†â€™ heading + bearing) mod 360` including
+  and is 90 at distance zero; display bearing follows `(360 ÃƒÂ¢Ã‹â€ Ã¢â‚¬â„¢ heading + bearing) mod 360` including
   wrap-around on both sides; distance text is whole feet at exactly `DISTANCE_UNIT_THRESHOLD_FEET`
   and miles to two decimals just above it; `isArrived` is false just below
   `ARRIVAL_CONE_HALF_ANGLE_DEGREES` and true exactly at it.
 - [ ] T052 [P] [US2] Write `ST/guidance/ConeGeometryCalculatorTest.kt` (FR-035, FR-036): apex and
   car anchor are `CONE_LENGTH_FRACTION / 2` either side of the center along the display bearing; the
-  sweep starts at `bearing Ã¢Ë†â€™ halfAngle` and spans `2 Ãƒâ€” halfAngle`; every point of the sector lies
-  within Ã‚Â±0.5 of the origin for every half-angle below the arrival half-angle; the type has no
+  sweep starts at `bearing ÃƒÂ¢Ã‹â€ Ã¢â‚¬â„¢ halfAngle` and spans `2 ÃƒÆ’Ã¢â‚¬â€ halfAngle`; every point of the sector lies
+  within Ãƒâ€šÃ‚Â±0.5 of the origin for every half-angle below the arrival half-angle; the type has no
   centerline field.
 - [ ] T053 [P] [US2] Write `ST/guidance/DefaultViewSelectorTest.kt` (FR-010, FR-040, FR-041,
   FR-042, FR-049, FR-056): the seven rules in order. Rule 1: a `DenialConfirmation` for either
@@ -440,7 +440,7 @@ Location; outside it nothing does.
 window: the second location is stored with the original declaration time. Repeat with the second
 stop after the window: the first location is kept.
 
-### Tests for User Story 3 Ã¢Å¡Â Ã¯Â¸Â (write first, must fail)
+### Tests for User Story 3 ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â (write first, must fail)
 
 - [ ] T072 [P] [US3] Write `ST/domain/ParkedLocationRecoveryWindowTest.kt` (FR-021, FR-023):
   `isRecoveryOpen` is true at the declaration time and exactly `PARKED_RECOVERY_WINDOW_MILLIS` after
@@ -495,11 +495,11 @@ either answer dismisses, with no other effect.
 **Independent Test**: Raise the half-angle to the threshold: message and prompt appear. Answer: the
 prompt is gone, the state is PARKED and the location is unchanged.
 
-### Tests for User Story 4 Ã¢Å¡Â Ã¯Â¸Â (write first, must fail)
+### Tests for User Story 4 ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â (write first, must fail)
 
-- [ ] T080 [P] [US4] Write `ST/guidance/ArrivalPromptTest.kt` (FR-039): armed Ã¢â€ â€™ prompting when
-  arrival begins; prompting Ã¢â€ â€™ dismissed on an answer; dismissed stays dismissed while arrival holds
-  and across updates with no guidance state; dismissed Ã¢â€ â€™ armed only after a non-arrived guidance
+- [ ] T080 [P] [US4] Write `ST/guidance/ArrivalPromptTest.kt` (FR-039): armed ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ prompting when
+  arrival begins; prompting ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ dismissed on an answer; dismissed stays dismissed while arrival holds
+  and across updates with no guidance state; dismissed ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ armed only after a non-arrived guidance
   state; the next arrival prompts again.
 - [ ] T081 [P] [US4] Write `ST/engine/HomeScreenPresenterArrivalTest.kt` (FR-038, FR-039, SC-009):
   `Arrived(isPromptVisible = true)` when uncertainty is at least the distance and `Guidance` when it
@@ -533,12 +533,12 @@ prompt is gone, the state is PARKED and the location is unchanged.
 **Independent Test**: Drive the presenter through every combination and check the view; launch the
 app fresh and see the default view with no interaction.
 
-### Tests for User Story 5 Ã¢Å¡Â Ã¯Â¸Â (write first, must fail)
+### Tests for User Story 5 ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â (write first, must fail)
 
 - [ ] T087 [P] [US5] Write `ST/engine/DefaultViewMatrixTest.kt` (FR-002, FR-042, FR-049): through
   the presenter, with no denial confirmation pending (rule 1 is covered by T053 and T099), for every
-  combination of fine location granted/not Ãƒâ€” notifications granted/not Ãƒâ€” the four lifecycle states Ãƒâ€”
-  fix none/stale/no-accuracy/fresh Ãƒâ€”
+  combination of fine location granted/not ÃƒÆ’Ã¢â‚¬â€ notifications granted/not ÃƒÆ’Ã¢â‚¬â€ the four lifecycle states ÃƒÆ’Ã¢â‚¬â€
+  fix none/stale/no-accuracy/fresh ÃƒÆ’Ã¢â‚¬â€
   heading none/stale/fresh, exactly one `HomeScreenState` results and it is the one FR-042 names; a
   missing required permission leaves the engine's lifecycle and location unchanged; losing the fix
   or heading while PARKED never changes the lifecycle.
@@ -568,10 +568,10 @@ DRIVING, and the idle sampling rate rises when the phone is in a vehicle.
 **Independent Test**: From a seeded PARKED record, replay fast readings: the store holds DRIVING and
 no location, and a new engine on that store agrees.
 
-### Tests for User Story 6 Ã¢Å¡Â Ã¯Â¸Â (write first, must fail)
+### Tests for User Story 6 ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â (write first, must fail)
 
 - [ ] T092 [P] [US6] Write `ST/domain/ParkingStateMachineDriveAwayTest.kt` (FR-004, FR-006, FR-007,
-  FR-019, FR-026): PARKED Ã¢â€ â€™ DRIVING when smoothed speed exceeds the threshold, with the location
+  FR-019, FR-026): PARKED ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ DRIVING when smoothed speed exceeds the threshold, with the location
   `null` and `persist == true`; one fast reading among slow ones keeps PARKED and the location;
   dead-zone and slow speeds keep PARKED; PARKED never becomes FINDING or PARKING; inside the
   recovery window a fast smoothed speed drives away and does not correct.
@@ -610,9 +610,9 @@ with permission, restarts after reboot when allowed, and never crashes on any pe
 
 **Independent Test**: With fakes, walk every permission combination, including boot and a sticky
 restart: no crash, no sensing without permission, the right notification text and the right view.
-Then run quickstart Ã‚Â§5 on an emulator or device.
+Then run quickstart Ãƒâ€šÃ‚Â§5 on an emulator or device.
 
-### Tests for User Story 7 Ã¢Å¡Â Ã¯Â¸Â (write first, must fail)
+### Tests for User Story 7 ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â (write first, must fail)
 
 - [ ] T099 [P] [US7] Write `ST/platform/PermissionSequenceTest.kt` (FR-048, FR-056) for the shared
   `requestPermissionsInOrder` with `FakePermissionController` and a recording `confirmDenial`: with
@@ -732,7 +732,7 @@ Then run quickstart Ã‚Â§5 on an emulator or device.
   pass.
 - [ ] T113 [US7] Run `.\gradlew.bat :shared:testAndroidHostTest :app:testDebugUnitTest :app:lintDebug`.
   All tests pass and lint reports no errors.
-- [ ] T114 [US7] Run quickstart Ã‚Â§5 checks O1 to O13 on an emulator or device (O10 needs Android 12+) and record each result
+- [ ] T114 [US7] Run quickstart Ãƒâ€šÃ‚Â§5 checks O1 to O13 on an emulator or device (O10 needs Android 12+) and record each result
   in `specs/003-park-detect-guidance/validation-results.md`. T107 to T112 are not closed until this
   is done; any failure is logged in `analysis-findings.md` and fixed at its source.
 
@@ -756,7 +756,7 @@ Then run quickstart Ã‚Â§5 on an emulator or device.
   `.\gradlew.bat :app:assembleDebug :shared:testAndroidHostTest :app:testDebugUnitTest :app:lintDebug`
   and `Invoke-Pester tools\traceability\tests`. Record the test counts and lint result in
   `specs/003-park-detect-guidance/validation-results.md`.
-- [ ] T119 Run quickstart Ã‚Â§6 field checks V1 to V10 on a phone and record them in
+- [ ] T119 Run quickstart Ãƒâ€šÃ‚Â§6 field checks V1 to V10 on a phone and record them in
   `specs/003-park-detect-guidance/validation-results.md`. V2 is the binding measurement for FR-044.
   Use V9's reading-spacing measurement to close or reopen finding AN1-C4, and V3 for AN1-B2, in
   `analysis-findings.md`. This is evidence in addition to the automated tests, not in place of them.
@@ -782,26 +782,26 @@ Then run quickstart Ã‚Â§5 on an emulator or device.
 - **Polish**: every story.
 
 ```text
-Setup Ã¢â€ â€™ Foundational Ã¢â€ â€™ US1 Ã¢â€â‚¬Ã¢â€Â¬Ã¢â€â‚¬Ã¢â€ â€™ US2 Ã¢â€â‚¬Ã¢â€Â¬Ã¢â€â‚¬Ã¢â€ â€™ US4
-                            Ã¢â€â€š        Ã¢â€Å“Ã¢â€â‚¬Ã¢â€ â€™ US5
-                            Ã¢â€â€š        Ã¢â€â€Ã¢â€â‚¬Ã¢â€ â€™ US7
-                            Ã¢â€â€Ã¢â€â‚¬Ã¢â€ â€™ US3 Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€ â€™ US6
+Setup ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Foundational ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ US1 ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ‚Â¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ US2 ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ‚Â¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ US4
+                            ÃƒÂ¢Ã¢â‚¬ÂÃ¢â‚¬Å¡        ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ US5
+                            ÃƒÂ¢Ã¢â‚¬ÂÃ¢â‚¬Å¡        ÃƒÂ¢Ã¢â‚¬ÂÃ¢â‚¬ÂÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ US7
+                            ÃƒÂ¢Ã¢â‚¬ÂÃ¢â‚¬ÂÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ US3 ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ US6
 ```
 
 ### Same-file sequences (never parallel with each other)
 
-- `ParkingStateMachine.kt`: T040 Ã¢â€ â€™ T077 Ã¢â€ â€™ T095
-- `ParkingEngine.kt`: T041 Ã¢â€ â€™ T078 Ã¢â€ â€™ T096
-- `HomeScreenPresenter.kt`: T064 Ã¢â€ â€™ T084 Ã¢â€ â€™ T090 Ã¢â€ â€™ T112
-- `ParkedLocation.kt`: T018 Ã¢â€ â€™ T076
-- `PersistedParkingRecord.kt`: T020 Ã¢â€ â€™ T037
-- `GeoMath.kt`: T039 Ã¢â€ â€™ T060
-- `PlatformFactory.android.kt`: T047 Ã¢â€ â€™ T066 Ã¢â€ â€™ T097 Ã¢â€ â€™ T107
-- `HomeScreen.kt`: T068 Ã¢â€ â€™ T085 Ã¢â€ â€™ T090 Ã¢â€ â€™ T112
-- `strings.xml`: T004 Ã¢â€ â€™ T068 Ã¢â€ â€™ T085 Ã¢â€ â€™ T090 Ã¢â€ â€™ T109 Ã¢â€ â€™ T112
-- `MainActivity.kt`: T004 Ã¢â€ â€™ T069 Ã¢â€ â€™ T112
-- `CarFinderApplication.kt`: T004 Ã¢â€ â€™ T048 Ã¢â€ â€™ T069
-- `AndroidManifest.xml`: T004 Ã¢â€ â€™ T108
+- `ParkingStateMachine.kt`: T040 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ T077 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ T095
+- `ParkingEngine.kt`: T041 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ T078 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ T096
+- `HomeScreenPresenter.kt`: T064 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ T084 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ T090 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ T112
+- `ParkedLocation.kt`: T018 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ T076
+- `PersistedParkingRecord.kt`: T020 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ T037
+- `GeoMath.kt`: T039 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ T060
+- `PlatformFactory.android.kt`: T047 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ T066 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ T097 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ T107
+- `HomeScreen.kt`: T068 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ T085 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ T090 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ T112
+- `strings.xml`: T004 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ T068 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ T085 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ T090 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ T109 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ T112
+- `MainActivity.kt`: T004 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ T069 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ T112
+- `CarFinderApplication.kt`: T004 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ T048 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ T069
+- `AndroidManifest.xml`: T004 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ T108
 
 ### Within each story
 
@@ -813,7 +813,7 @@ wiring and UI; the story's run task last.
 ```text
 # Foundational tests, then types:
 T008, then T009 T010 T011 T012 T013 T014
-T015 T016 T017 T018 T019 T020   then T021 Ã¢â€ â€™ T022,  T023 T024
+T015 T016 T017 T018 T019 T020   then T021 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ T022,  T023 T024
 
 # US1 tests together, then independent implementations:
 T027 T028 T029 T030 T031 T032 T033 T034 T035
@@ -823,8 +823,8 @@ T036 T037 T038 T042 T043 T044
 T050 T051 T052 T053 T054 T055 T056 T057 T058 T059
 
 # After US2, by two people:
-A: US4 (T080Ã¢â‚¬â€œT086) Ã¢â€ â€™ US5 (T087Ã¢â‚¬â€œT091) Ã¢â€ â€™ US7 (T099Ã¢â‚¬â€œT114)
-B: US3 (T072Ã¢â‚¬â€œT079) Ã¢â€ â€™ US6 (T092Ã¢â‚¬â€œT098)
+A: US4 (T080ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“T086) ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ US5 (T087ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“T091) ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ US7 (T099ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“T114)
+B: US3 (T072ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“T079) ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ US6 (T092ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“T098)
 ```
 
 ## Implementation Strategy

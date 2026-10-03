@@ -2,6 +2,7 @@ package com.packmuleforge.carfindermvp.shared.testing
 
 import com.packmuleforge.carfindermvp.shared.domain.CarFinderConstants
 import com.packmuleforge.carfindermvp.shared.domain.LocationReading
+import com.packmuleforge.carfindermvp.shared.guidance.GeoMath
 import kotlin.math.PI
 import kotlin.math.asin
 import kotlin.math.cos
@@ -27,8 +28,7 @@ object Readings {
     const val BASE_LATITUDE = 37.4220
     const val BASE_LONGITUDE = -122.0841
 
-    /** Must match the radius used by the shared distance math. */
-    const val EARTH_RADIUS_METERS = 6_371_008.8
+    private val EARTH_RADIUS_METERS = GeoMath.EARTH_RADIUS_METERS
 
     fun mphToMetersPerSecond(mph: Double): Double = mph / CarFinderConstants.MPH_PER_METER_PER_SECOND
 
