@@ -34,7 +34,7 @@ class MainActivity : ComponentActivity() {
             val state by app.presenter.state.collectAsStateWithLifecycle()
             HomeScreen(
                 state = state,
-                onArrivalAnswered = {},
+                onArrivalAnswered = app.presenter::onArrivalAnswered,
                 onDenialConfirmed = {},
                 onDenialDismissed = {},
             )

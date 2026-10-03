@@ -4,4 +4,8 @@
     <string name="location_unavailable">Location unavailable</string>
     <string name="person_icon_description">You</string>
     <string name="car_icon_description">Your car</string>
+    <string name="arrived_message">You have arrived</string>
+    <string name="arrival_question">Do you see your car?</string>
+    <string name="answer_yes">Yes</string>
+    <string name="answer_no">No</string>
 </resources>

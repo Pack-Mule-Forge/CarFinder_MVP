@@ -26,6 +26,7 @@ fun HomeScreen(
             when (state) {
                 HomeScreenState.Unavailable -> StatusMessage(stringResource(R.string.location_unavailable))
                 is HomeScreenState.Guidance -> GuidanceDisplay(state)
+                is HomeScreenState.Arrived -> ArrivedDisplay(state.isPromptVisible, onArrivalAnswered)
                 // The remaining states are drawn by the stories that introduce them.
                 else -> Unit
             }

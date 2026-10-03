@@ -1,6 +1,7 @@
 package com.packmuleforge.carfindermvp.shared.engine
 
 import com.packmuleforge.carfindermvp.shared.domain.CarFinderConstants
+import com.packmuleforge.carfindermvp.shared.guidance.ArrivalPrompt
 import com.packmuleforge.carfindermvp.shared.guidance.DefaultViewSelector
 import com.packmuleforge.carfindermvp.shared.guidance.GuidanceCalculator
 import com.packmuleforge.carfindermvp.shared.guidance.HeadingReading
@@ -16,6 +17,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 
 /**
@@ -30,19 +33,27 @@ class HomeScreenPresenter(
     private val scope: CoroutineScope,
 ) {
     private val denial = MutableStateFlow<DenialConfirmation?>(null)
+    private val arrivalPrompt = MutableStateFlow(ArrivalPrompt())
     private val tick = MutableStateFlow(0L)
     private var tickJob: Job? = null
     private var isVisible = false
 
     val state: StateFlow<HomeScreenState> =
-        combine(engine.state, adapters.heading.heading, adapters.permissions.status, denial, tick) {
-                engineState, heading, permissions, pendingDenial, _ ->
+        combine(
+            combine(engine.state, adapters.heading.heading, adapters.permissions.status, ::Triple),
+            combine(denial, arrivalPrompt, tick, ::Triple),
+        ) { (engineState, heading, permissions), (pendingDenial, _, _) ->
             compute(engineState, heading, permissions, pendingDenial)
         }.stateIn(
             scope,
             SharingStarted.Eagerly,
             compute(engine.state.value, adapters.heading.heading.value, adapters.permissions.status.value, null),
         )
+
+    /** Yes and No both only dismiss the prompt; the lifecycle and the Parked Location are untouched (FR-039). */
+    fun onArrivalAnswered() {
+        arrivalPrompt.update { it.onAnswer() }
+    }
 
     /** Starts or stops the heading source and the staleness tick, and tells the engine (FR-027 row 3). */
     fun onGuidanceVisible(visible: Boolean) {
@@ -92,7 +103,12 @@ class HomeScreenPresenter(
                     checkNotNull(engineState.latestFix),
                     checkNotNull(heading),
                 )
-                HomeScreenState.Guidance(guidance.cone, guidance.distanceText)
+                val prompt = arrivalPrompt.updateAndGet { it.onGuidance(guidance.isArrived) }
+                if (guidance.isArrived) {
+                    HomeScreenState.Arrived(isPromptVisible = prompt.isPromptVisible)
+                } else {
+                    HomeScreenState.Guidance(guidance.cone, guidance.distanceText)
+                }
             }
         }
     }
