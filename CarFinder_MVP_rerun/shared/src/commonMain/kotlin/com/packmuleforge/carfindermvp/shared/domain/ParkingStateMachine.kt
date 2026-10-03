@@ -46,7 +46,7 @@ data class Transition(
  * The lifecycle reducer: pure, deterministic, no clock and no I/O. Events carry their own times.
  *
  * @requirement FR-001, FR-002, FR-003, FR-004, FR-005, FR-006, FR-009, FR-012, FR-013, FR-014, FR-015, FR-017
- * @requirement FR-021, FR-022, FR-023, FR-024, FR-025, FR-026
+ * @requirement FR-019, FR-021, FR-022, FR-023, FR-024, FR-025, FR-026
  */
 object ParkingStateMachine {
 
@@ -107,10 +107,8 @@ object ParkingStateMachine {
         val smoothed = if (speedMph != null) filter.smoothed else null
         val current = snapshot.copy(speedFilter = filter)
 
-        // Rule 1: drive check first.
-        if (smoothed != null && smoothed > CarFinderConstants.DRIVING_SPEED_THRESHOLD_MPH &&
-            (current.lifecycle == FINDING || current.lifecycle == PARKING)
-        ) {
+        // Rule 1: drive check first. From PARKED it deletes the location and takes precedence over recovery.
+        if (smoothed != null && smoothed > CarFinderConstants.DRIVING_SPEED_THRESHOLD_MPH && current.lifecycle != DRIVING) {
             return changed(snapshot, current.copy(lifecycle = DRIVING, parkedLocation = null, window = ConvergenceWindow()))
         }
 
@@ -140,12 +138,7 @@ object ParkingStateMachine {
                 }
             }
 
-            // A driving speed is never used for a correction (FR-026).
-            PARKED -> if (smoothed != null && smoothed > CarFinderConstants.DRIVING_SPEED_THRESHOLD_MPH) {
-                unchanged(snapshot, current)
-            } else {
-                onParkedReading(snapshot, current, reading, event.nowEpochMillis)
-            }
+            PARKED -> onParkedReading(snapshot, current, reading, event.nowEpochMillis)
 
             FINDING -> unchanged(snapshot, current)
         }

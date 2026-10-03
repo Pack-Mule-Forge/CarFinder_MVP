@@ -1,6 +1,8 @@
 package com.packmuleforge.carfindermvp.shared.platform
 
+import com.packmuleforge.carfindermvp.shared.platform.android.ActivityTransitionSource
 import com.packmuleforge.carfindermvp.shared.platform.android.AndroidDiagnosticLog
+import com.packmuleforge.carfindermvp.shared.platform.android.PlayServicesActivityPort
 import com.packmuleforge.carfindermvp.shared.platform.android.AndroidMonotonicClock
 import com.packmuleforge.carfindermvp.shared.platform.android.AndroidSensorPort
 import com.packmuleforge.carfindermvp.shared.platform.android.RotationVectorHeadingSource
@@ -26,7 +28,7 @@ actual fun createPlatformAdapters(context: PlatformContext): PlatformAdapters {
     return PlatformAdapters(
         location = location,
         heading = RotationVectorHeadingSource(AndroidSensorPort(appContext), monotonicClock, location::latestReading, wallClock),
-        activity = InertActivitySignalSource(),
+        activity = ActivityTransitionSource(PlayServicesActivityPort(appContext)),
         store = DataStoreParkingStore(
             produceFile = { File(appContext.filesDir, "datastore/parking_record.json") },
             scope = CoroutineScope(SupervisorJob() + Dispatchers.IO),

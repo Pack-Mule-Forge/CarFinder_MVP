@@ -41,7 +41,7 @@ data class EngineState(
  * published, and the sampling interval is re-applied after every input. Only the foreground service calls [start];
  * the UI calls the read-only [restore].
  *
- * @requirement FR-003, FR-018, FR-020, FR-027, FR-029
+ * @requirement FR-003, FR-018, FR-019, FR-020, FR-024, FR-027, FR-028, FR-029
  */
 class ParkingEngine(private val adapters: PlatformAdapters, private val scope: CoroutineScope) {
 
@@ -82,8 +82,12 @@ class ParkingEngine(private val adapters: PlatformAdapters, private val scope: C
             launch(start = CoroutineStart.UNDISPATCHED) {
                 adapters.location.readings.collect { inputs.send(Input.Reading(it)) }
             }
+            launch(start = CoroutineStart.UNDISPATCHED) {
+                adapters.activity.isInVehicle.collect { inputs.send(Input.InVehicle(it)) }
+            }
             applySamplingInterval()
             adapters.location.start()
+            adapters.activity.start()
             for (input in inputs) handle(input)
         }
     }
@@ -95,6 +99,7 @@ class ParkingEngine(private val adapters: PlatformAdapters, private val scope: C
         windowTimer = null
         appliedIntervalMillis = null
         adapters.location.stop()
+        adapters.activity.stop()
     }
 
     fun setGuidanceVisible(visible: Boolean) {
@@ -116,6 +121,8 @@ class ParkingEngine(private val adapters: PlatformAdapters, private val scope: C
         when (input) {
             is Input.Reading -> onReading(input.reading)
             is Input.GuidanceVisibility -> isGuidanceVisible = input.visible
+            // Only a sampling hint: it never changes the lifecycle and never pauses sampling (FR-028).
+            is Input.InVehicle -> isInVehicle = input.inVehicle
             Input.RecoveryWindowElapsed -> {
                 snapshot = ParkingStateMachine.reduce(
                     snapshot,
@@ -183,6 +190,7 @@ class ParkingEngine(private val adapters: PlatformAdapters, private val scope: C
     private sealed interface Input {
         data class Reading(val reading: LocationReading) : Input
         data class GuidanceVisibility(val visible: Boolean) : Input
+        data class InVehicle(val inVehicle: Boolean) : Input
         data object RecoveryWindowElapsed : Input
     }
 }
