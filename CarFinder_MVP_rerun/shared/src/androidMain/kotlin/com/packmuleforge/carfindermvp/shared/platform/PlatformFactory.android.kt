@@ -10,7 +10,7 @@ import com.packmuleforge.carfindermvp.shared.platform.android.AndroidWallClock
 import com.packmuleforge.carfindermvp.shared.platform.android.DataStoreParkingStore
 import com.packmuleforge.carfindermvp.shared.platform.android.FusedLocationSource
 import com.packmuleforge.carfindermvp.shared.platform.android.PlayServicesFusedClientPort
-import com.packmuleforge.carfindermvp.shared.platform.android.StubPermissionController
+import com.packmuleforge.carfindermvp.shared.platform.android.AndroidPermissionController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -34,7 +34,7 @@ actual fun createPlatformAdapters(context: PlatformContext): PlatformAdapters {
             scope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
             log = log,
         ),
-        permissions = StubPermissionController(appContext),
+        permissions = AndroidPermissionController(appContext),
         monotonicClock = monotonicClock,
         wallClock = wallClock,
         log = log,

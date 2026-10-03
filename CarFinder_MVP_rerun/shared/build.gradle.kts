@@ -31,6 +31,7 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.play.services.location)
             implementation(libs.androidx.datastore)
+            implementation(libs.androidx.activity)
         }
         getByName("androidHostTest").dependencies {
             implementation(libs.kotlin.test.junit)

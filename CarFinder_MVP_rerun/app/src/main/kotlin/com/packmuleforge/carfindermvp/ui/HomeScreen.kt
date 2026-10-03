@@ -29,8 +29,9 @@ fun HomeScreen(
                 HomeScreenState.Parking -> StatusMessage(stringResource(R.string.parking_soon))
                 is HomeScreenState.Guidance -> GuidanceDisplay(state)
                 is HomeScreenState.Arrived -> ArrivedDisplay(state.isPromptVisible, onArrivalAnswered)
-                // The remaining states are drawn by the stories that introduce them.
-                else -> Unit
+                is HomeScreenState.PermissionRequired ->
+                    PermissionConfirmation(state.capability, onDenialConfirmed, onDenialDismissed)
+                HomeScreenState.Closing -> StatusMessage(stringResource(R.string.closing), tag = UiTags.CLOSING_MESSAGE)
             }
         }
     }

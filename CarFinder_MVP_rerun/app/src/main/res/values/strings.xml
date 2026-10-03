@@ -10,4 +10,13 @@
     <string name="arrival_question">Do you see your car?</string>
     <string name="answer_yes">Yes</string>
     <string name="answer_no">No</string>
+    <string name="permission_required_location">Car Finder needs location permission to run. Close Car Finder?</string>
+    <string name="permission_required_notifications">Car Finder needs notification permission to run. Close Car Finder?</string>
+    <string name="permission_close">Close</string>
+    <string name="permission_allow">Allow</string>
+    <string name="closing">Car Finder is closing.</string>
+    <string name="notification_channel">Parking detection</string>
+    <string name="notification_title">Car Finder</string>
+    <string name="notification_monitoring">Monitoring for parking</string>
+    <string name="notification_allow_all_the_time">Choose Allow all the time for location so detection resumes after a restart. Tap to open settings.</string>
 </resources>
