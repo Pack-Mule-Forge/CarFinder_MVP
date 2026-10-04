@@ -20,3 +20,7 @@ local.properties
 .env
 .env.*
 *.local.*
+
+# Signing material: keystores must never be committed
+*.jks
+*.keystore

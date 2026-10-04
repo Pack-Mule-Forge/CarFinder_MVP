@@ -1,95 +1,82 @@
 # Car Finder
 
-Car Finder is an Android app that notices when you have parked, remembers where the car is, and guides you back to
-it. It detects parking from the phone's smoothed speed and three location readings that settle in one place, with no
-"I parked" button, and quietly corrects a premature "parked" if you settle somewhere else within a short window. To
-guide you back it shows a cone that points at the car and widens when either position is uncertain, with the
-distance in the middle; when the uncertainty covers the remaining distance it says "You have arrived" and asks
-"Do you see your car?". Driving away clears the old location. Everything runs on the device, and detection keeps
-running in the background behind a persistent notification.
+A mobile app that remembers where you parked — tracks your phone's speed and
+location in the background, detects when you've parked, and shows you the
+direction and distance back when you return.
 
-The domain logic lives in a Kotlin Multiplatform shared core so a future iOS app can reuse it. The Android app adds
-native adapters (location, heading, activity recognition, storage, permissions) and a Jetpack Compose UI.
+**Stack:** Kotlin Multiplatform for the core detection/guidance logic, Android
+app UI in Jetpack Compose (currently Android-only; the shared module is
+structured with future platforms in mind). Build with `./gradlew
+assembleDebug` or open in Android Studio; `./gradlew test` runs the shared
+and app test suites.
 
-## Project layout
+**Status:** Minimally Viable Product. It works surprisingly well for how
+simple the core idea is, and it has known gaps — see the spec under
+`specs/003-park-detect-guidance/` for what's explicitly in and out of scope.
 
-| Path | What it holds |
-|---|---|
-| `shared/` | KMP module. `commonMain`: state machine, recovery, sampling policy, guidance math, engine, presenter, adapter interfaces. `androidMain`: the Android adapters and the platform factory. |
-| `shared-testing/` | Fakes for every adapter, reading builders and the scripted-replay harness, used by `:shared` and `:app` tests. |
-| `app/` | Android app: foreground detection service, boot receiver, notification and the Compose home screen. |
-| `tools/traceability/` | Script that produces the requirement traceability report, its Pester tests, and the declared no-code list. |
-| `specs/003-park-detect-guidance/` | Spec, plan, research, data model, contracts, quickstart, tasks, findings ledger and validation results. |
+## What it does
 
-## Prerequisites
+Car Finder is a straightforward but not trivial project. It's a mobile app
+that tracks the phone's speed and location. When it determines that you've
+parked, it saves that location — all done in the background. When you launch
+the app and there's a stored location, the display shows the direction and
+distance from your current position back to where you parked.
 
-- A JDK to launch Gradle, with `JAVA_HOME` set to it. Android Studio's bundled runtime works. Gradle provisions its
-  own daemon toolchain (JDK 25, see `gradle/gradle-daemon-jvm.properties`).
-- Android SDK with platform 37. Point `local.properties` at it (`sdk.dir=...`).
-- PowerShell 5.1 or later and Pester 5 or later for the tooling tests:
-  `Install-Module Pester -MinimumVersion 5.0 -Scope CurrentUser`.
-- For device checks: an emulator or phone on Android 8.0 (API 26) or later, and `adb`. Field checks need a phone
-  with GPS and a compass.
+The algorithm is fairly simple in concept. When the phone is at driving
+speed, it anticipates that you'll slow down to park. When you slow to
+parking speed, it increases the sample rate, waiting for confirmation that
+you've actually parked. Once parked, that location is stored. When the phone
+reaches driving speed again, the parked location is cleared. This leaves a
+lot of edge cases, but it works surprisingly well for an MVP.
 
-## Build
+## Why this exists, and how it was built
 
-```powershell
-.\gradlew.bat :app:assembleDebug
-```
+The experience of using GitHub Spec-Kit was exciting and overwhelming. I
+have some history writing requirements, so this spec-driven-development
+approach called to me. I worked with Claude to build out a solid
+requirements document and constitution. But once I started the actual
+Spec-Kit process, the volume of information and decisions it asked of me
+became overwhelming — the biggest problem was losing track of the context
+behind each individual issue. Claude's context window is a lot bigger than
+mine.
 
-The debug APK is written to `app/build/outputs/apk/debug/app-debug.apk`.
+My takeaway, and my recommendation to anyone trying Spec-Kit: have a second
+AI on the side whose only job is to help you track, summarize, and explain
+the tradeoffs behind each decision as it comes up. And don't let yourself
+feel rushed by a blinking cursor. I used Claude's Cowork mode for this,
+since it gave both of us direct visibility into the files and the repo to
+validate actions and check error resolutions rather than taking anything on
+faith. I named that role, the Overseer.
 
-## Test
+That turned out to matter more than I expected. Spec-Kit's own `analyze`
+step is genuinely good at catching real problems — not just typos, but
+actual bugs that would have shipped silently. Two examples that survived
+into this repo's ledger (`specs/003-park-detect-guidance/analysis-findings.md`):
+an early pass caught that closing the app didn't reliably end the
+background process — `finishAndRemoveTask()` alone doesn't guarantee it, and
+the pending-close signal had no way to survive an in-flight permission
+prompt. Separately, in an earlier build, a background service's own code
+comment claimed it would escalate its GPS sampling rate as you got close to
+parking; it never actually did, so detection that was supposed to take
+10-15 seconds quietly took closer to a minute. Neither of those failed a
+test before analyze caught them — nothing was watching for them yet.
 
-```powershell
-# Shared domain, engine, presenter, replay and Android adapter tests (JVM, Robolectric for the adapters)
-.\gradlew.bat :shared:testAndroidHostTest
+I ran the Spec-Kit process through several rounds of `analyze` → fix →
+re-analyze to work through findings like these before I was willing to call
+it clean. Two earlier attempts at this same feature are kept in
+`_rerun_impl_stash/` for comparison — not because they were failures, but
+because comparing independent builds against the same requirements is part
+of how I tested whether the requirements themselves were good enough.
 
-# App tests: Compose semantics UI tests, service, boot receiver, Activity and permission flows, source scans
-.\gradlew.bat :app:testDebugUnitTest
+## What's next
 
-# Lint
-.\gradlew.bat :app:lintDebug
+There's a follow-on production version planned with some more fun features.
 
-# Traceability tool and findings-ledger tests
-Invoke-Pester tools\traceability\tests
-```
+## More
 
-None of these need an emulator. Operating-system behavior (permission prompts, background start, reboot, process
-death) is checked on an emulator or device with the steps in the
-[quickstart](specs/003-park-detect-guidance/quickstart.md#5-operating-system-behavior-emulator-or-device-required-not-optional);
-the latest results are in [validation-results.md](specs/003-park-detect-guidance/validation-results.md).
+Check out [packmuleforge.com](http://packmuleforge.com) (Coming Soon) for
+more of my projects and progress.
 
-## Traceability report
+## License
 
-Every requirement in the spec is linked to code and tests by `@requirement FR-xxx` / `QR-xxx` tags (constitution
-Principle II). To regenerate the report:
-
-```powershell
-.\tools\traceability\Get-TraceabilityReport.ps1 -FailOnGaps
-```
-
-It writes `specs/003-park-detect-guidance/traceability.md` and exits 1 if a requirement has no code annotation
-(and is not on the declared no-code list), has code but no test, or if a tag names a requirement the spec does not
-define.
-
-## Install on a phone
-
-```powershell
-adb install -r app\build\outputs\apk\debug\app-debug.apk
-```
-
-On first launch the app asks, one at a time, for location, background location ("Allow all the time"), physical
-activity and notifications. Location and notifications are required: denying either shows a confirmation that
-Car Finder cannot run without it; choosing **Close** closes the app, and **Allow** or back asks again. With only
-"While using the app" location, detection runs while the app has been opened since the last restart, and the
-notification asks for "Allow all the time" so it can restart on its own after a reboot.
-
-## Further documentation
-
-- [Feature spec](specs/003-park-detect-guidance/spec.md)
-- [Implementation plan](specs/003-park-detect-guidance/plan.md) and [research decisions](specs/003-park-detect-guidance/research.md)
-- [Data model](specs/003-park-detect-guidance/data-model.md) and [contracts](specs/003-park-detect-guidance/contracts/)
-- [Quickstart and validation guide](specs/003-park-detect-guidance/quickstart.md)
-- [Tasks](specs/003-park-detect-guidance/tasks.md) and [findings ledger](specs/003-park-detect-guidance/analysis-findings.md)
-- [Project constitution](.specify/memory/constitution.md)
+See [LICENSE](./LICENSE).
