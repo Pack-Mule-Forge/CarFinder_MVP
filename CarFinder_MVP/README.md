@@ -34,8 +34,12 @@ lot of edge cases, but it works surprisingly well for an MVP.
 The experience of using GitHub Spec-Kit was exciting and overwhelming. I
 have some history writing requirements, so this spec-driven-development
 approach called to me. I worked with Claude to build out a solid
-requirements document and constitution. But once I started the actual
-Spec-Kit process, the volume of information and decisions it asked of me
+requirements document and constitution. The prompts that came out of those
+sessions — covering the constitution, the plan, and the spec itself — are
+kept in `Claude Prompts/`, exactly as they emerged from multiple rounds of
+work with Claude in Cowork, in case they're useful to anyone else working
+through the same process. But once I started the actual Spec-Kit process,
+the volume of information and decisions it asked of me
 became overwhelming — the biggest problem was losing track of the context
 behind each individual issue. Claude's context window is a lot bigger than
 mine.
